@@ -4,9 +4,6 @@ import java.io.IOException;
 import java.util.Date;
 
 import org.dyndns.warenix.tedalarm.R;
-import org.dyndns.warenix.tedalarm.R.id;
-import org.dyndns.warenix.tedalarm.R.layout;
-import org.dyndns.warenix.tedalarm.R.menu;
 import org.dyndns.warenix.tedalarm.provider.TedAlarmMeta;
 import org.dyndns.warenix.util.WLog;
 
@@ -179,6 +176,7 @@ public class AlarmRingFragment extends SherlockFragment implements
 			if (audioManager.getStreamVolume(AudioManager.STREAM_ALARM) != 0) {
 				mMediaPlayer.setAudioStreamType(AudioManager.STREAM_ALARM);
 				mMediaPlayer.setVolume(0.2f, 0.2f);
+				mMediaPlayer.setLooping(true);
 				mMediaPlayer.prepare();
 				mMediaPlayer.start();
 			}
