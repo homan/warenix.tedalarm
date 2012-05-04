@@ -7,7 +7,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 
-public class AlarmReceiver extends BroadcastReceiver {
+/**
+ * Alarm ring receiver when a scheduled alarm in about to fire.
+ * 
+ * @author warenix
+ * 
+ */
+public class AlarmRingReceiver extends BroadcastReceiver {
 	private static final String TAG = "AlarmReceiver";
 
 	@Override
@@ -15,7 +21,7 @@ public class AlarmReceiver extends BroadcastReceiver {
 		Uri alarmUri = intent.getData();
 		WLog.d(TAG, String.format("received alarm[%s]", alarmUri));
 
-		AlarmMaster.startAlarmActivity(context, alarmUri);
+		AlarmMaster.actionStartAlarmRing(context, alarmUri);
 	}
 
 }

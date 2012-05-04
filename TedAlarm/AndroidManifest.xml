@@ -23,7 +23,7 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".AlarmReceiver" />
+        <receiver android:name=".AlarmRingReceiver" />
 
         <provider
             android:authorities="tedalarm"

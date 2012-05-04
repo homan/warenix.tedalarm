@@ -1,8 +1,6 @@
 package org.dyndns.warenix.tedalarm.ui;
 
 import org.dyndns.warenix.tedalarm.R;
-import org.dyndns.warenix.tedalarm.R.id;
-import org.dyndns.warenix.tedalarm.R.menu;
 import org.dyndns.warenix.tedalarm.provider.TedAlarmMeta;
 import org.dyndns.warenix.util.WLog;
 
@@ -21,6 +19,12 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 
+/**
+ * Display all alarms. And allow user to create/delete
+ * 
+ * @author warenix
+ * 
+ */
 public class AlarmListFragment extends SherlockListFragment implements
 		LoaderManager.LoaderCallbacks<Cursor> {
 
@@ -53,9 +57,11 @@ public class AlarmListFragment extends SherlockListFragment implements
 		setHasOptionsMenu(true);
 
 		// Create an empty adapter we will use to display the loaded data.
-		mAdapter = new SimpleCursorAdapter(getActivity(),
-				android.R.layout.simple_list_item_1, null,
-				new String[] { TedAlarmMeta.TableAlarm.COL_DESCRIPTION },
+		mAdapter = new SimpleCursorAdapter(
+				getActivity(),
+				android.R.layout.simple_list_item_1,
+				null,
+				new String[] { TedAlarmMeta.TableAlarmColumns.COL_DESCRIPTION },
 				new int[] { android.R.id.text1 }, 0);
 		setListAdapter(mAdapter);
 
@@ -132,6 +138,12 @@ public class AlarmListFragment extends SherlockListFragment implements
 		mAdapter.swapCursor(null);
 	}
 
+	/**
+	 * listen to alarm list event
+	 * 
+	 * @author warenix
+	 * 
+	 */
 	public interface AlarmListListener {
 		public void onAlarmClicked(int position, long id);
 

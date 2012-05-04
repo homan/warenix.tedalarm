@@ -33,7 +33,7 @@ public class TedAlarmMeta {
 	public static final String DB_NAME = "tedalarm";
 	public static final int DB_VERSION = 2;
 
-	public static class TableAlarm implements BaseColumns {
+	public static class TableAlarmColumns implements BaseColumns {
 		public static final String TABLE_NAME = "alarm";
 
 		public static final String COL_ID = "_id";
@@ -54,8 +54,10 @@ public class TedAlarmMeta {
 	}
 
 	// projections
-	// These are the Contacts rows that we will retrieve.
+	/**
+	 * projection for displaying alarm in a list
+	 */
 	public static final String[] ALL_ALARM_LIST_PROJECTION = new String[] {
-			TableAlarm.COL_ID, TableAlarm.COL_DESCRIPTION };
+			TableAlarmColumns.COL_ID, TableAlarmColumns.COL_DESCRIPTION };
 
 }

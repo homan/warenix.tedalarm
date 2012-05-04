@@ -56,7 +56,7 @@ public class AlarmRingFragment extends SherlockFragment implements
 		super.onCreate(savedInstanceState);
 
 		Bundle args = getArguments();
-		readInputParam(args);
+		readInputBundle(args);
 	}
 
 	@Override
@@ -94,7 +94,7 @@ public class AlarmRingFragment extends SherlockFragment implements
 		return super.onOptionsItemSelected(item);
 	}
 
-	void readInputParam(Bundle args) {
+	void readInputBundle(Bundle args) {
 		if (args != null) {
 			mInputParam.alarmId = args.getLong(BUNDLE_ALARM_ID);
 		}
@@ -111,10 +111,6 @@ public class AlarmRingFragment extends SherlockFragment implements
 		mStop.setOnClickListener(this);
 	}
 
-	void bindNewAlarmView() {
-		bindStartTimeView(System.currentTimeMillis());
-	}
-
 	void bindEditAlarmView() {
 		Cursor cursor;
 		Uri empsUri = Uri.parse(String.format("content://tedalarm/%d",
@@ -129,11 +125,13 @@ public class AlarmRingFragment extends SherlockFragment implements
 		}
 
 		if (cursor.moveToFirst()) {
-			mDescription.setText(cursor.getString(cursor
-					.getColumnIndex(TedAlarmMeta.TableAlarm.COL_DESCRIPTION)));
+			mDescription
+					.setText(cursor.getString(cursor
+							.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_DESCRIPTION)));
 
-			long startTimeMs = cursor.getLong(cursor
-					.getColumnIndex(TedAlarmMeta.TableAlarm.COL_START_TIME));
+			long startTimeMs = cursor
+					.getLong(cursor
+							.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_START_TIME));
 			bindStartTimeView(startTimeMs);
 		}
 		cursor.close();

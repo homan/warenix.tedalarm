@@ -2,12 +2,9 @@ package org.dyndns.warenix.tedalarm.ui;
 
 import java.util.Date;
 
-import org.dyndns.warenix.tedalarm.AlarmUtils;
+import org.dyndns.warenix.tedalarm.AlarmMaster;
 import org.dyndns.warenix.tedalarm.R;
 import org.dyndns.warenix.tedalarm.TedAlarm;
-import org.dyndns.warenix.tedalarm.R.id;
-import org.dyndns.warenix.tedalarm.R.layout;
-import org.dyndns.warenix.tedalarm.R.menu;
 import org.dyndns.warenix.tedalarm.provider.TedAlarmMeta;
 import org.dyndns.warenix.util.WLog;
 
@@ -27,7 +24,9 @@ import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 
 /**
- * UI to edit/ create an alarm.
+ * UI to create/edit/save an alarm. If input bundle doesn't contain an
+ * BUNDLE_ALARM_ID, it will treat it as a create action. Otherwise, it will load
+ * the saved alarm from database and present a UI for user to edit.
  * 
  * @author warenix
  * 
@@ -63,12 +62,22 @@ public class AlarmEditFragment extends SherlockFragment {
 		return f;
 	}
 
+	/**
+	 * prepare input bundle for action new alarm
+	 * 
+	 * @return
+	 */
 	public static Bundle prepareNewAlarmBundle() {
 		Bundle bundle = new Bundle();
 		bundle.putInt(BUNDLE_ACTION_TYPE, ACTION_TYPE_NEW_ALARM);
 		return bundle;
 	}
 
+	/**
+	 * prepare input bundle for action edit alarm
+	 * 
+	 * @return
+	 */
 	public static Bundle prepareEditAlarmBundle(long alarmId) {
 		Bundle bundle = new Bundle();
 		bundle.putInt(BUNDLE_ACTION_TYPE, ACTION_TYPE_EDIT_ALARM);
@@ -81,7 +90,7 @@ public class AlarmEditFragment extends SherlockFragment {
 		super.onCreate(savedInstanceState);
 
 		Bundle args = getArguments();
-		readInputParam(args);
+		readInputBundle(args);
 	}
 
 	@Override
@@ -120,7 +129,7 @@ public class AlarmEditFragment extends SherlockFragment {
 		return super.onOptionsItemSelected(item);
 	}
 
-	void readInputParam(Bundle args) {
+	void readInputBundle(Bundle args) {
 		if (args != null) {
 			mInputParam.actionType = args.getInt(BUNDLE_ACTION_TYPE);
 			switch (mInputParam.actionType) {
@@ -131,6 +140,11 @@ public class AlarmEditFragment extends SherlockFragment {
 		}
 	}
 
+	/**
+	 * init ui elements
+	 * 
+	 * @param view
+	 */
 	void initView(View view) {
 		mDescription = (EditText) view.findViewById(R.id.description);
 		mStartTime = (TimePicker) view.findViewById(R.id.start_time);
@@ -138,22 +152,31 @@ public class AlarmEditFragment extends SherlockFragment {
 		mRepeat = (CheckBox) view.findViewById(R.id.repeat);
 	}
 
+	/**
+	 * set values ui elements
+	 */
 	void bindView() {
 		switch (mInputParam.actionType) {
 		case ACTION_TYPE_EDIT_ALARM:
-			bindEditAlarmView();
+			bindForActionEditAlarm();
 			break;
 		case ACTION_TYPE_NEW_ALARM:
-			bindNewAlarmView();
+			bindForActionNewAlarm();
 			break;
 		}
 	}
 
-	void bindNewAlarmView() {
+	/**
+	 * set values for new alarm action
+	 */
+	void bindForActionNewAlarm() {
 		bindStartTimeView(System.currentTimeMillis());
 	}
 
-	void bindEditAlarmView() {
+	/**
+	 * set values for edit alarm action
+	 */
+	void bindForActionEditAlarm() {
 		Cursor cursor;
 		Uri empsUri = Uri.parse(String.format("content://tedalarm/%d",
 				mInputParam.alarmId));
@@ -167,18 +190,22 @@ public class AlarmEditFragment extends SherlockFragment {
 		}
 
 		if (cursor.moveToFirst()) {
-			mDescription.setText(cursor.getString(cursor
-					.getColumnIndex(TedAlarmMeta.TableAlarm.COL_DESCRIPTION)));
+			mDescription
+					.setText(cursor.getString(cursor
+							.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_DESCRIPTION)));
 
-			long startTimeMs = cursor.getLong(cursor
-					.getColumnIndex(TedAlarmMeta.TableAlarm.COL_START_TIME));
+			long startTimeMs = cursor
+					.getLong(cursor
+							.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_START_TIME));
 			bindStartTimeView(startTimeMs);
-			boolean scheduled = cursor.getLong(cursor
-					.getColumnIndex(TedAlarmMeta.TableAlarm.COL_SCHEDULED)) != 0L;
+			boolean scheduled = cursor
+					.getLong(cursor
+							.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_SCHEDULED)) != 0L;
 			mScheduled.setChecked(scheduled);
 
-			boolean repeatMask = cursor.getLong(cursor
-					.getColumnIndex(TedAlarmMeta.TableAlarm.COL_REPEAT_MASK)) != 0L;
+			boolean repeatMask = cursor
+					.getLong(cursor
+							.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_REPEAT_MASK)) != 0L;
 			mRepeat.setChecked(repeatMask);
 		}
 		cursor.close();
@@ -195,18 +222,22 @@ public class AlarmEditFragment extends SherlockFragment {
 	 * 
 	 * @return
 	 */
-	private TedAlarm createAlarmFromView() {
+	protected TedAlarm createAlarmFromView() {
 		TedAlarm alarm = new TedAlarm();
 		alarm.description = mDescription.getText().toString().trim();
 		alarm.id = mInputParam.alarmId;
-		alarm.startTime = AlarmUtils.convertAlarmTime(
+		alarm.startTime = AlarmMaster.convertAlarmTime(
 				mStartTime.getCurrentHour(), mStartTime.getCurrentMinute());
 		alarm.description = mDescription.getText().toString().trim();
 		alarm.scheduled = mScheduled.isChecked() ? 1L : 0L;
+		// FIXME: hardcoded repeat interval to be 5 sec
 		alarm.repeatMask = mRepeat.isChecked() ? 5L * 1000 : 0L;
 		return alarm;
 	}
 
+	/**
+	 * want to save current alarm
+	 */
 	protected void onSave() {
 		if (mAlarmEditListener != null) {
 			TedAlarm alarm = createAlarmFromView();
@@ -214,6 +245,9 @@ public class AlarmEditFragment extends SherlockFragment {
 		}
 	}
 
+	/**
+	 * want to delete current alarm
+	 */
 	protected void onDelete() {
 		if (mAlarmEditListener != null) {
 			TedAlarm alarm = createAlarmFromView();
@@ -221,9 +255,26 @@ public class AlarmEditFragment extends SherlockFragment {
 		}
 	}
 
+	/**
+	 * listener will be notified to event occurs about editing an alarm
+	 * 
+	 * @author warenix
+	 * 
+	 */
 	public interface AlarmEditListener {
+		/**
+		 * when an alarm is wanted to be saved
+		 * 
+		 * @param actionId
+		 * @param alarm
+		 */
 		public void onSave(int actionId, TedAlarm alarm);
 
+		/**
+		 * when an alarm is wanted to be deleted
+		 * 
+		 * @param alarm
+		 */
 		public void onDelete(TedAlarm alarm);
 	}
 }

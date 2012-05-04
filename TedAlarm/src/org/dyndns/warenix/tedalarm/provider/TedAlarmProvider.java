@@ -48,11 +48,11 @@ public class TedAlarmProvider extends ContentProvider {
 		case SINGLE_ALARM:
 			List<?> segments = uri.getPathSegments();
 			String id = (String) segments.get(0);
-			where = TedAlarmMeta.TableAlarm.COL_ID + "=?";
+			where = TedAlarmMeta.TableAlarmColumns.COL_ID + "=?";
 			args = new String[] { id };
 		case ALL_ALARMS:
 			database = db.getWritableDatabase();
-			rows = database.delete(TedAlarmMeta.TableAlarm.TABLE_NAME, where,
+			rows = database.delete(TedAlarmMeta.TableAlarmColumns.TABLE_NAME, where,
 					args);
 			break;
 		}
@@ -85,7 +85,7 @@ public class TedAlarmProvider extends ContentProvider {
 
 		if (values != null) {
 			newID = db.getWritableDatabase().insert(
-					TedAlarmMeta.TableAlarm.TABLE_NAME, null, values);
+					TedAlarmMeta.TableAlarmColumns.TABLE_NAME, null, values);
 			return Uri.withAppendedPath(uri, String.valueOf(newID));
 		} else
 			return null;
@@ -102,7 +102,7 @@ public class TedAlarmProvider extends ContentProvider {
 			String[] selectionArgs, String sortOrder) {
 		SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
 
-		builder.setTables(TedAlarmMeta.TableAlarm.TABLE_NAME);
+		builder.setTables(TedAlarmMeta.TableAlarmColumns.TABLE_NAME);
 
 		String order = null;
 		Cursor result = null;
@@ -117,12 +117,12 @@ public class TedAlarmProvider extends ContentProvider {
 			List<?> segments = uri.getPathSegments();
 			String id = (String) segments.get(0);
 			result = builder.query(db.getReadableDatabase(), projection,
-					TedAlarmMeta.TableAlarm.COL_ID + "=?", new String[] { id },
+					TedAlarmMeta.TableAlarmColumns.COL_ID + "=?", new String[] { id },
 					null, null, order);
 			break;
 		case SCHEDULED_ALARMS:
 			result = builder.query(db.getReadableDatabase(), projection,
-					TedAlarmMeta.TableAlarm.COL_SCHEDULED + "=?",
+					TedAlarmMeta.TableAlarmColumns.COL_SCHEDULED + "=?",
 					new String[] { "1" }, null, null, order);
 			break;
 		case ALL_ALARMS:
@@ -149,8 +149,8 @@ public class TedAlarmProvider extends ContentProvider {
 				List<?> segments = uri.getPathSegments();
 				String id = (String) segments.get(0);
 				rows = db.getWritableDatabase().update(
-						TedAlarmMeta.TableAlarm.TABLE_NAME, values,
-						TedAlarmMeta.TableAlarm.COL_ID + "=?",
+						TedAlarmMeta.TableAlarmColumns.TABLE_NAME, values,
+						TedAlarmMeta.TableAlarmColumns.COL_ID + "=?",
 						new String[] { id });
 
 			}
@@ -178,13 +178,13 @@ public class TedAlarmProvider extends ContentProvider {
 
 		@Override
 		public void onCreate(SQLiteDatabase db) {
-			db.execSQL(TedAlarmMeta.TableAlarm.SQL_CREATE);
+			db.execSQL(TedAlarmMeta.TableAlarmColumns.SQL_CREATE);
 		}
 
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 			db.execSQL(String.format("drop table %s",
-					TedAlarmMeta.TableAlarm.TABLE_NAME));
+					TedAlarmMeta.TableAlarmColumns.TABLE_NAME));
 			onCreate(db);
 		}
 	}
