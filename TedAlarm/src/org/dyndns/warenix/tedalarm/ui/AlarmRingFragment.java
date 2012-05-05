@@ -120,20 +120,16 @@ public class AlarmRingFragment extends SherlockFragment implements
 				null, null);
 		if (cursor == null) {
 			WLog.i(TAG, String.format("cursor is null"));
-		} else {
-			WLog.d(TAG, String.format("cursor count[%d]", cursor.getCount()));
+			return;
 		}
+		WLog.d(TAG, String.format("cursor count[%d]", cursor.getCount()));
+		mDescription
+				.setText(cursor.getString(cursor
+						.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_DESCRIPTION)));
 
-		if (cursor.moveToFirst()) {
-			mDescription
-					.setText(cursor.getString(cursor
-							.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_DESCRIPTION)));
-
-			long startTimeMs = cursor
-					.getLong(cursor
-							.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_START_TIME));
-			bindStartTimeView(startTimeMs);
-		}
+		long startTimeMs = cursor.getLong(cursor
+				.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_START_TIME));
+		bindStartTimeView(startTimeMs);
 		cursor.close();
 	}
 

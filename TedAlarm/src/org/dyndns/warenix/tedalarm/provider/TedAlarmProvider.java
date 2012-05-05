@@ -31,6 +31,8 @@ public class TedAlarmProvider extends ContentProvider {
 		matcher.addURI(TedAlarmMeta.AUTHORITY,
 				TedAlarmMeta.PATH_SCHEDULED_ALARM,
 				TedAlarmMeta.PathType.SCHEDULED_ALARMS.ordinal());
+		matcher.addURI(TedAlarmMeta.AUTHORITY, TedAlarmMeta.PATH_ALL_HOLIDAYS,
+				TedAlarmMeta.PathType.ALL_HOLIDAYS.ordinal());
 	}
 
 	protected DatabaseHelper db;
@@ -52,9 +54,17 @@ public class TedAlarmProvider extends ContentProvider {
 			args = new String[] { id };
 		case ALL_ALARMS:
 			database = db.getWritableDatabase();
-			rows = database.delete(TedAlarmMeta.TableAlarmColumns.TABLE_NAME, where,
-					args);
+			rows = database.delete(TedAlarmMeta.TableAlarmColumns.TABLE_NAME,
+					where, args);
 			break;
+		case ALL_HOLIDAYS:
+			segments = uri.getPathSegments();
+			id = (String) segments.get(1);
+			where = TedAlarmMeta.TableHolidayColumns.COL_ALARM_ID + "=?";
+			args = new String[] { id };
+			database = db.getWritableDatabase();
+			rows = database.delete(TedAlarmMeta.TableHolidayColumns.TABLE_NAME,
+					where, args);
 		}
 
 		return rows;
@@ -74,21 +84,25 @@ public class TedAlarmProvider extends ContentProvider {
 
 	@Override
 	public Uri insert(Uri uri, ContentValues values) {
+		if (values == null) {
+			throw new IllegalArgumentException("ContentValues is null "
+					+ uri.toString());
+		}
+
 		// not the Uri we're expecting
 		long newID = 0;
 		TedAlarmMeta.PathType pathType = matchUriToPathType(uri);
 
-		if (pathType != TedAlarmMeta.PathType.ALL_ALARMS) {
-			throw new IllegalArgumentException("Wrong insert URi "
-					+ uri.toString());
-		}
-
-		if (values != null) {
+		if (pathType == TedAlarmMeta.PathType.ALL_ALARMS) {
 			newID = db.getWritableDatabase().insert(
 					TedAlarmMeta.TableAlarmColumns.TABLE_NAME, null, values);
 			return Uri.withAppendedPath(uri, String.valueOf(newID));
-		} else
-			return null;
+		} else if (pathType == TedAlarmMeta.PathType.ALL_HOLIDAYS) {
+			newID = db.getWritableDatabase().insert(
+					TedAlarmMeta.TableHolidayColumns.TABLE_NAME, null, values);
+			return Uri.withAppendedPath(uri, String.valueOf(newID));
+		}
+		return null;
 	}
 
 	@Override
@@ -117,8 +131,8 @@ public class TedAlarmProvider extends ContentProvider {
 			List<?> segments = uri.getPathSegments();
 			String id = (String) segments.get(0);
 			result = builder.query(db.getReadableDatabase(), projection,
-					TedAlarmMeta.TableAlarmColumns.COL_ID + "=?", new String[] { id },
-					null, null, order);
+					TedAlarmMeta.TableAlarmColumns.COL_ID + "=?",
+					new String[] { id }, null, null, order);
 			break;
 		case SCHEDULED_ALARMS:
 			result = builder.query(db.getReadableDatabase(), projection,
@@ -128,6 +142,14 @@ public class TedAlarmProvider extends ContentProvider {
 		case ALL_ALARMS:
 			result = builder.query(db.getReadableDatabase(), projection,
 					selection, selectionArgs, null, null, order);
+			break;
+		case ALL_HOLIDAYS:
+			builder.setTables(TedAlarmMeta.TableHolidayColumns.TABLE_NAME);
+			segments = uri.getPathSegments();
+			id = (String) segments.get(1);
+			result = builder.query(db.getReadableDatabase(), projection,
+					TedAlarmMeta.TableHolidayColumns.COL_ALARM_ID + "=?",
+					new String[] { id }, null, null, order);
 			break;
 		}
 
@@ -145,16 +167,21 @@ public class TedAlarmProvider extends ContentProvider {
 		int rows = 0;
 		switch (pathType) {
 		case SINGLE_ALARM:
-			if (values != null) {
-				List<?> segments = uri.getPathSegments();
-				String id = (String) segments.get(0);
-				rows = db.getWritableDatabase().update(
-						TedAlarmMeta.TableAlarmColumns.TABLE_NAME, values,
-						TedAlarmMeta.TableAlarmColumns.COL_ID + "=?",
-						new String[] { id });
-
-			}
+			List<?> segments = uri.getPathSegments();
+			String id = (String) segments.get(0);
+			rows = db.getWritableDatabase().update(
+					TedAlarmMeta.TableAlarmColumns.TABLE_NAME, values,
+					TedAlarmMeta.TableAlarmColumns.COL_ID + "=?",
+					new String[] { id });
 			break;
+		// case ALL_HOLIDAYS:
+		// segments = uri.getPathSegments();
+		// id = (String) segments.get(0);
+		// rows = db.getWritableDatabase().update(
+		// TedAlarmMeta.TableHolidayColumns.TABLE_NAME, values,
+		// TedAlarmMeta.TableAlarmColumns.COL_ID + "=?",
+		// new String[] { id });
+		// break;
 		}
 
 		return rows;
@@ -179,12 +206,15 @@ public class TedAlarmProvider extends ContentProvider {
 		@Override
 		public void onCreate(SQLiteDatabase db) {
 			db.execSQL(TedAlarmMeta.TableAlarmColumns.SQL_CREATE);
+			db.execSQL(TedAlarmMeta.TableHolidayColumns.SQL_CREATE);
 		}
 
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-			db.execSQL(String.format("drop table %s",
+			db.execSQL(String.format("drop table if exists %s",
 					TedAlarmMeta.TableAlarmColumns.TABLE_NAME));
+			db.execSQL(String.format("drop table if exists %s",
+					TedAlarmMeta.TableHolidayColumns.TABLE_NAME));
 			onCreate(db);
 		}
 	}

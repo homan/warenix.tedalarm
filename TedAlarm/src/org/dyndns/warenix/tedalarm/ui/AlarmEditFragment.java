@@ -1,20 +1,31 @@
 package org.dyndns.warenix.tedalarm.ui;
 
+import java.util.ArrayList;
 import java.util.Date;
 
+import org.dyndns.warenix.com.google.calendar.CalendarList;
+import org.dyndns.warenix.com.google.calendar.CalendarList.CalendarListItem;
+import org.dyndns.warenix.com.google.calendar.GoogleCalendarMaster;
 import org.dyndns.warenix.tedalarm.AlarmMaster;
 import org.dyndns.warenix.tedalarm.R;
 import org.dyndns.warenix.tedalarm.TedAlarm;
 import org.dyndns.warenix.tedalarm.provider.TedAlarmMeta;
+import org.dyndns.warenix.tedalarm.ui.CheckboxDialogFragment.OnCheckboxDialogListener;
 import org.dyndns.warenix.util.WLog;
 
+import android.app.DatePickerDialog.OnDateSetListener;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.TimePicker;
 
@@ -22,6 +33,7 @@ import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
+import com.google.api.GoogleOAuthAccessToken;
 
 /**
  * UI to create/edit/save an alarm. If input bundle doesn't contain an
@@ -31,7 +43,8 @@ import com.actionbarsherlock.view.MenuItem;
  * @author warenix
  * 
  */
-public class AlarmEditFragment extends SherlockFragment {
+public class AlarmEditFragment extends SherlockFragment implements
+		OnDateSetListener, OnCheckboxDialogListener {
 	private static final String TAG = "AlarmEditFragment";
 
 	protected AlarmEditListener mAlarmEditListener;
@@ -46,6 +59,11 @@ public class AlarmEditFragment extends SherlockFragment {
 	TimePicker mStartTime;
 	CheckBox mScheduled;
 	CheckBox mRepeat;
+	View mWeekDay;
+	Button mHoliday;
+
+	static ArrayList<CalendarListItem> sCalendarList;
+	boolean[] mCalendarChecked;
 
 	private static class InputParam {
 		long alarmId;
@@ -106,6 +124,13 @@ public class AlarmEditFragment extends SherlockFragment {
 		// We have a menu item to show in action bar.
 		setHasOptionsMenu(true);
 
+		if (sCalendarList == null) {
+			sCalendarList = GoogleCalendarMaster.getCalendarList(getActivity());
+			if (sCalendarList != null) {
+				mCalendarChecked = new boolean[sCalendarList.size()];
+			}
+		}
+
 		initView(getView());
 		bindView();
 	}
@@ -150,6 +175,24 @@ public class AlarmEditFragment extends SherlockFragment {
 		mStartTime = (TimePicker) view.findViewById(R.id.start_time);
 		mScheduled = (CheckBox) view.findViewById(R.id.scheduled);
 		mRepeat = (CheckBox) view.findViewById(R.id.repeat);
+		mWeekDay = view.findViewById(R.id.week_day);
+		mHoliday = (Button) view.findViewById(R.id.holiday);
+
+		mRepeat.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				mWeekDay.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+			}
+		});
+
+		mHoliday.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				showCalendarList();
+			}
+		});
 	}
 
 	/**
@@ -185,10 +228,8 @@ public class AlarmEditFragment extends SherlockFragment {
 				null, null);
 		if (cursor == null) {
 			WLog.i(TAG, String.format("cursor is null"));
-		} else {
-			WLog.d(TAG, String.format("cursor count[%d]", cursor.getCount()));
+			return;
 		}
-
 		if (cursor.moveToFirst()) {
 			mDescription
 					.setText(cursor.getString(cursor
@@ -207,14 +248,34 @@ public class AlarmEditFragment extends SherlockFragment {
 					.getLong(cursor
 							.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_REPEAT_MASK)) != 0L;
 			mRepeat.setChecked(repeatMask);
+			mWeekDay.setVisibility(repeatMask ? View.VISIBLE : View.GONE);
+			cursor.close();
+
+			buildCalenderCheckedFromDb();
+			buildCheckedCalendarList();
+			bindHoliday(buildCheckedCalendarList());
 		}
-		cursor.close();
 	}
 
 	void bindStartTimeView(long startTimeMs) {
 		Date d = new Date(startTimeMs);
 		mStartTime.setCurrentHour(d.getHours());
 		mStartTime.setCurrentMinute(d.getMinutes());
+	}
+
+	GoogleOAuthAccessToken mAccessToken;
+
+	void showCalendarList() {
+		if (sCalendarList != null) {
+			ArrayList<String> items = new ArrayList<String>();
+			for (CalendarListItem calendar : sCalendarList) {
+				items.add(calendar.summary);
+			}
+			CheckboxDialogFragment f = CheckboxDialogFragment.newInstance(
+					items, mCalendarChecked);
+			f.setOnCheckboxDialogListener(this);
+			f.show(getFragmentManager(), "holiday");
+		}
 	}
 
 	/**
@@ -232,6 +293,7 @@ public class AlarmEditFragment extends SherlockFragment {
 		alarm.scheduled = mScheduled.isChecked() ? 1L : 0L;
 		// FIXME: hardcoded repeat interval to be 5 sec
 		alarm.repeatMask = mRepeat.isChecked() ? 5L * 1000 : 0L;
+		alarm.holidayList = buildCheckedCalendarList();
 		return alarm;
 	}
 
@@ -277,4 +339,77 @@ public class AlarmEditFragment extends SherlockFragment {
 		 */
 		public void onDelete(TedAlarm alarm);
 	}
+
+	// OnDateSetListener
+	@Override
+	public void onDateSet(DatePicker view, int year, int monthOfYear,
+			int dayOfMonth) {
+
+	}
+
+	@Override
+	public void onOk(boolean[] itemsChecked) {
+		mCalendarChecked = itemsChecked;
+		int count = 0;
+		for (int i = 0; i < itemsChecked.length; ++i) {
+			if (itemsChecked[i]) {
+				++count;
+			}
+		}
+
+		bindHoliday(buildCheckedCalendarList());
+
+	}
+
+	void buildCalenderCheckedFromDb() {
+		ArrayList<String> checkedCalendarList = AlarmMaster
+				.getCalendarIdOfAlarm(getActivity(), mInputParam.alarmId);
+		mCalendarChecked = new boolean[sCalendarList.size()];
+		CalendarListItem calendar = null;
+		for (int i = 0; i < sCalendarList.size(); ++i) {
+			calendar = sCalendarList.get(i);
+			for (String checkedCalenderId : checkedCalendarList) {
+				if (calendar.id.equals(checkedCalenderId)) {
+					mCalendarChecked[i] = true;
+					break;
+				}
+			}
+		}
+	}
+
+	/**
+	 * display holiday with right values
+	 * 
+	 * @param checkedCalendarList
+	 */
+	private void bindHoliday(ArrayList<CalendarListItem> checkedCalendarList) {
+		String allCalendarName = "";
+		for (CalendarListItem calendar : checkedCalendarList) {
+			allCalendarName += "\"" + calendar.summary + "\" ";
+		}
+		mHoliday.setText(String.format("Holiday +%s", allCalendarName));
+	}
+
+	/**
+	 * get a list of checked calendar
+	 * 
+	 * @return
+	 */
+	ArrayList<CalendarListItem> buildCheckedCalendarList() {
+		if (mCalendarChecked != null) {
+			ArrayList<CalendarListItem> checkedCalendarList = new ArrayList<CalendarList.CalendarListItem>();
+			for (int i = 0; i < mCalendarChecked.length; ++i) {
+				if (mCalendarChecked[i]) {
+					checkedCalendarList.add(sCalendarList.get(i));
+				}
+			}
+			return checkedCalendarList;
+		}
+		return null;
+	}
+
+	@Override
+	public void onCancel() {
+	}
+
 }

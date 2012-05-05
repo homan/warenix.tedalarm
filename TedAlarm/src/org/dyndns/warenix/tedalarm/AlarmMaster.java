@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
+import org.dyndns.warenix.com.google.calendar.CalendarList.CalendarListItem;
 import org.dyndns.warenix.tedalarm.app.TedAlarmActivity;
 import org.dyndns.warenix.tedalarm.provider.TedAlarmMeta;
 import org.dyndns.warenix.util.WLog;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -244,5 +246,58 @@ public class AlarmMaster {
 		intent.setData(convertAlarmToUri(alarm));
 
 		return intent;
+	}
+
+	/**
+	 * get calendar ids from holiday
+	 * 
+	 * @param context
+	 * @param alarm
+	 * @return
+	 */
+	public static ArrayList<String> getCalendarIdOfAlarm(Context context,
+			long alarmId) {
+		Uri empsUri = Uri.parse("content://tedalarm/holidays/" + alarmId);
+		Cursor cursor = context.getContentResolver().query(empsUri, null, null,
+				null, null);
+		if (cursor != null) {
+			ArrayList<String> calendarIdList = new ArrayList<String>();
+			while (cursor.moveToNext()) {
+				String calendarId = cursor
+						.getString(cursor
+								.getColumnIndex(TedAlarmMeta.TableHolidayColumns.COL_CALENDAR_ID));
+				calendarIdList.add(calendarId);
+			}
+
+			return calendarIdList;
+		}
+		return null;
+	}
+
+	public static void addAllAlarmHoliday(Context context, TedAlarm alarm) {
+		if (alarm.holidayList != null) {
+			Uri empsUri = Uri.parse("content://tedalarm/holidays/" + alarm.id);
+			ContentValues cvs;
+
+			for (CalendarListItem calendar : alarm.holidayList) {
+				cvs = new ContentValues();
+				cvs.put(TedAlarmMeta.TableHolidayColumns.COL_ALARM_ID, alarm.id);
+				cvs.put(TedAlarmMeta.TableHolidayColumns.COL_CALENDAR_ID,
+						calendar.id);
+				Uri newUri = context.getContentResolver().insert(empsUri, cvs);
+			}
+		}
+	}
+
+	public static void removeAllAlarmHoliday(Context context, TedAlarm alarm) {
+		if (alarm.holidayList != null) {
+			Uri empsUri = Uri.parse("content://tedalarm/holidays/" + alarm.id);
+			ContentValues cvs;
+
+			cvs = new ContentValues();
+			int rowsNumber = context.getContentResolver().delete(empsUri, null,
+					null);
+			WLog.i(TAG, String.format("test delete row[%d]", rowsNumber));
+		}
 	}
 }

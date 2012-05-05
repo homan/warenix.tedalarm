@@ -11,6 +11,7 @@ import org.dyndns.warenix.tedalarm.ui.AlarmEditFragment.AlarmEditListener;
 import org.dyndns.warenix.tedalarm.ui.AlarmListFragment;
 import org.dyndns.warenix.tedalarm.ui.AlarmListFragment.AlarmListListener;
 import org.dyndns.warenix.tedalarm.ui.AlarmRingFragment;
+import org.dyndns.warenix.tedalarm.ui.SyncFragment;
 import org.dyndns.warenix.util.WLog;
 
 import android.content.ContentValues;
@@ -20,6 +21,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 
 import com.actionbarsherlock.app.ActionBar;
@@ -42,6 +44,7 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 	private static final String TAG = "TedAlarmActivity";
 
 	private Fragment mCurrentFragment;
+	private Fragment mFragment1;
 
 	/**
 	 * from edit alarm view
@@ -85,7 +88,18 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 					.newInstance(args);
 			showFragment(alarmRingFragment, true);
 		}
+
+		// show menu
+		FragmentManager fm = getSupportFragmentManager();
+		FragmentTransaction ft = fm.beginTransaction();
+		mFragment1 = fm.findFragmentByTag("f1");
+		if (mFragment1 == null) {
+			mFragment1 = SyncFragment.newInstance();
+			ft.add(mFragment1, "f1");
+		}
+		ft.commit();
 		// testTedAlarmProvider();
+		// testHolidayProvider();
 	}
 
 	private void testTedAlarmProvider() {
@@ -138,6 +152,36 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 
 	}
 
+	void testHolidayProvider() {
+		Uri empsUri = Uri.parse("content://tedalarm/holidays/" + 123);
+		ContentValues cvs = null;
+
+		// WLog.i(TAG, String.format("test insert"));
+		// cvs = new ContentValues();
+		// cvs.put(TedAlarmMeta.TableHolidayColumns.COL_ALARM_ID, "123");
+		// cvs.put(TedAlarmMeta.TableHolidayColumns.COL_CALENDAR_ID,
+		// "cal_123a");
+		// // URi of the new inserted item
+		// Uri newAlarm = getContentResolver().insert(empsUri, cvs);
+		// WLog.d(TAG, String.format("new uri[%s]", newAlarm));
+
+		// // test query
+		// Cursor cursor = getContentResolver().query(empsUri, null, null, null,
+		// null);
+		// if (cursor == null) {
+		// WLog.i(TAG, String.format("cursor is null"));
+		// } else {
+		// WLog.d(TAG, String.format("cursor count[%d]", cursor.getCount()));
+		// }
+
+		WLog.i(TAG, String.format("test delete"));
+		// delete employee of id 8
+		// rowsNumber = getContentResolver().delete(deleteUri,
+		// TedAlarmMeta.TableAlarm.COL_ID + "=?", new String[] { "1" });
+		int rowsNumber = getContentResolver().delete(empsUri, null, null);
+		WLog.i(TAG, String.format("test delete row[%d]", rowsNumber));
+	}
+
 	@Override
 	public void onBackPressed() {
 		int displayOption = getSupportActionBar().getDisplayOptions();
@@ -178,58 +222,48 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 	// -AlarmListListener
 	// +AlarmEditListener
 	@Override
-	public void onSave(int actionType, final TedAlarm alarm) {
-		if (actionType == AlarmEditFragment.ACTION_TYPE_EDIT_ALARM) {
-			new Thread() {
-				public void run() {
-					WLog.i(TAG, String.format("test update"));
-					ContentValues cvs;
-					Uri updateUri = Uri.parse(String.format(
-							"content://tedalarm/%d", alarm.id));
+	public void onSave(final int actionType, final TedAlarm alarm) {
 
-					cvs = new ContentValues();
-					cvs.put(TedAlarmMeta.TableAlarmColumns.COL_DESCRIPTION,
-							alarm.description);
-					cvs.put(TedAlarmMeta.TableAlarmColumns.COL_REPEAT_MASK,
-							alarm.repeatMask);
-					cvs.put(TedAlarmMeta.TableAlarmColumns.COL_SCHEDULED,
-							alarm.scheduled);
-					cvs.put(TedAlarmMeta.TableAlarmColumns.COL_START_TIME,
-							alarm.startTime);
-					// int rowsNumber = getContentResolver().update(empsUri,
-					// cvs,
-					// "=?", new String[] { "8" });
+		new Thread() {
+			public void run() {
+				WLog.i(TAG, String.format("insert/update alarm"));
+				ContentValues cvs;
+				Uri updateUri = Uri.parse(String.format(
+						"content://tedalarm/%d", alarm.id));
+
+				cvs = new ContentValues();
+				cvs.put(TedAlarmMeta.TableAlarmColumns.COL_DESCRIPTION,
+						alarm.description);
+				cvs.put(TedAlarmMeta.TableAlarmColumns.COL_REPEAT_MASK,
+						alarm.repeatMask);
+				cvs.put(TedAlarmMeta.TableAlarmColumns.COL_SCHEDULED,
+						alarm.scheduled);
+				cvs.put(TedAlarmMeta.TableAlarmColumns.COL_START_TIME,
+						alarm.startTime);
+
+				if (actionType == AlarmEditFragment.ACTION_TYPE_EDIT_ALARM) {
 					int rowsNumber = getContentResolver().update(updateUri,
 							cvs, null, null);
 					WLog.i(TAG,
-							String.format("test updated row[%d]", rowsNumber));
-					mHideEditAlarmViewHandler.sendEmptyMessage(MESSAGE_ALARM_SAVED);
-				}
-			}.start();
-		} else if (actionType == AlarmEditFragment.ACTION_TYPE_NEW_ALARM) {
-			new Thread() {
-				public void run() {
-					WLog.i(TAG, String.format("test insert"));
+							String.format("updated alarm row[%d]", rowsNumber));
+				} else if (actionType == AlarmEditFragment.ACTION_TYPE_NEW_ALARM) {
 					Uri insertUri = Uri.parse("content://tedalarm");
-					ContentValues cvs = new ContentValues();
-					cvs.put(TedAlarmMeta.TableAlarmColumns.COL_DESCRIPTION,
-							alarm.description);
-					cvs.put(TedAlarmMeta.TableAlarmColumns.COL_REPEAT_MASK,
-							alarm.repeatMask);
-					cvs.put(TedAlarmMeta.TableAlarmColumns.COL_SCHEDULED,
-							alarm.scheduled);
-					cvs.put(TedAlarmMeta.TableAlarmColumns.COL_START_TIME,
-							alarm.startTime);
-					// URi of the new inserted item
-					Uri newAlarm = getContentResolver().insert(insertUri, cvs);
-					WLog.d(TAG, String.format("new uri[%s]", newAlarm));
-
-					mHideEditAlarmViewHandler.sendEmptyMessage(MESSAGE_ALARM_SAVED);
+					Uri newUri = getContentResolver().insert(insertUri, cvs);
+					WLog.i(TAG,
+							String.format("inserted alarm to url[%s]", newUri));
+					List<String> segments = newUri.getPathSegments();
+					alarm.id = Long.parseLong(segments.get(0));
 				}
-			}.start();
-		}
 
-		AlarmMaster.rescheduleAlarm(getApplicationContext(), alarm);
+				AlarmMaster.removeAllAlarmHoliday(getApplicationContext(),
+						alarm);
+				AlarmMaster.addAllAlarmHoliday(getApplicationContext(), alarm);
+				AlarmMaster.rescheduleAlarm(getApplicationContext(), alarm);
+
+				mHideEditAlarmViewHandler.sendEmptyMessage(MESSAGE_ALARM_SAVED);
+			}
+		}.start();
+
 	}
 
 	@Override
@@ -238,17 +272,17 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 			public void run() {
 				Uri deleteUri = Uri.parse(String.format(
 						"content://tedalarm/%d", alarm.id));
-				// rowsNumber = getContentResolver().delete(deleteUri,
-				// TedAlarmMeta.TableAlarm.COL_ID + "=?", new String[] { "1" });
 				int rowsNumber = getContentResolver().delete(deleteUri, null,
 						null);
 				WLog.i(TAG, String.format("test delete row[%d]", rowsNumber));
 
-				mHideEditAlarmViewHandler.sendEmptyMessage(MESSAGE_ALARM_DELETED);
+				AlarmMaster.removeAllAlarmHoliday(getApplicationContext(),
+						alarm);
+
+				mHideEditAlarmViewHandler
+						.sendEmptyMessage(MESSAGE_ALARM_DELETED);
 			}
 		}.start();
 	}
-
-	// -AlarmEditListener
 
 }

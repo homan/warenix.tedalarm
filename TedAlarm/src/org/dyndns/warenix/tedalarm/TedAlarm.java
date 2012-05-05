@@ -1,5 +1,9 @@
 package org.dyndns.warenix.tedalarm;
 
+import java.util.ArrayList;
+
+import org.dyndns.warenix.com.google.calendar.CalendarList.CalendarListItem;
+
 /**
  * TedAlarn understand which day is holiday so it won't wake you on these
  * special days.
@@ -29,6 +33,8 @@ public class TedAlarm {
 	 * repeat interval
 	 */
 	public long repeatMask;
+
+	public ArrayList<CalendarListItem> holidayList;
 
 	public String toString() {
 		return String

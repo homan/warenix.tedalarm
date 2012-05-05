@@ -24,14 +24,20 @@ public class TedAlarmMeta {
 	 */
 	public static final String PATH_SCHEDULED_ALARM = "scheduled";
 
+	/**
+	 * get all holidays for an alarm id
+	 */
+	public static final String PATH_ALL_HOLIDAYS = "holidays/#";
+
 	// URiMatcher to match client URis
 	public enum PathType {
-		ALL_ALARMS, SINGLE_ALARM, SCHEDULED_ALARMS
+		ALL_ALARMS, SINGLE_ALARM, SCHEDULED_ALARMS, //
+		ALL_HOLIDAYS
 	}
 
 	// database scheme
 	public static final String DB_NAME = "tedalarm";
-	public static final int DB_VERSION = 2;
+	public static final int DB_VERSION = 3;
 
 	public static class TableAlarmColumns implements BaseColumns {
 		public static final String TABLE_NAME = "alarm";
@@ -51,6 +57,30 @@ public class TedAlarmMeta {
 				COL_SCHEDULED + " INTEGER, " + //
 				COL_REPEAT_MASK + " INTEGER " + //
 				" )";
+	}
+
+	public static class TableHolidayColumns implements BaseColumns {
+		public static final String TABLE_NAME = "holiday";
+
+		public static final String COL__ID = "_id";
+		public static final String COL_CALENDAR_ID = "calendar_id";
+		public static final String COL_ALARM_ID = "alarm_id";
+
+		public static String SQL_CREATE = "CREATE TABLE "
+				+ //
+				TABLE_NAME
+				+ //
+				" ("
+				+ //
+				COL__ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+				+ //
+				COL_CALENDAR_ID + " TEXT, "
+				+ //
+				COL_ALARM_ID + " INTEGER,  "
+				+ //
+				"UNIQUE (" + COL_CALENDAR_ID + ", " + COL_ALARM_ID
+				+ ") ON CONFLICT REPLACE " //
+				+ " )";
 	}
 
 	// projections
