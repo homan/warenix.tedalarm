@@ -388,14 +388,16 @@ public class AlarmEditFragment extends SherlockFragment implements
 	void buildCalenderCheckedFromDb() {
 		ArrayList<String> checkedCalendarList = AlarmMaster
 				.getCalendarIdOfAlarm(getActivity(), mInputParam.alarmId);
-		mCalendarChecked = new boolean[sCalendarList.size()];
-		CalendarListItem calendar = null;
-		for (int i = 0; i < sCalendarList.size(); ++i) {
-			calendar = sCalendarList.get(i);
-			for (String checkedCalenderId : checkedCalendarList) {
-				if (calendar.id.equals(checkedCalenderId)) {
-					mCalendarChecked[i] = true;
-					break;
+		if (sCalendarList != null) {
+			mCalendarChecked = new boolean[sCalendarList.size()];
+			CalendarListItem calendar = null;
+			for (int i = 0; i < sCalendarList.size(); ++i) {
+				calendar = sCalendarList.get(i);
+				for (String checkedCalenderId : checkedCalendarList) {
+					if (calendar.id.equals(checkedCalenderId)) {
+						mCalendarChecked[i] = true;
+						break;
+					}
 				}
 			}
 		}
@@ -407,11 +409,13 @@ public class AlarmEditFragment extends SherlockFragment implements
 	 * @param checkedCalendarList
 	 */
 	private void bindHoliday(ArrayList<CalendarListItem> checkedCalendarList) {
-		String allCalendarName = "";
-		for (CalendarListItem calendar : checkedCalendarList) {
-			allCalendarName += "\"" + calendar.summary + "\" ";
+		if (checkedCalendarList != null) {
+			String allCalendarName = "";
+			for (CalendarListItem calendar : checkedCalendarList) {
+				allCalendarName += "\"" + calendar.summary + "\" ";
+			}
+			mHoliday.setText(String.format("Holiday +%s", allCalendarName));
 		}
-		mHoliday.setText(String.format("Holiday +%s", allCalendarName));
 	}
 
 	/**

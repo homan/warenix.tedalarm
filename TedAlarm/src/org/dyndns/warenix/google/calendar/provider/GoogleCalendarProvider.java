@@ -24,6 +24,12 @@ public class GoogleCalendarProvider extends ContentProvider {
 		matcher.addURI(GoogleCalendarMeta.AUTHORITY,
 				GoogleCalendarMeta.PATH_ALL_DAY_EVENT,
 				GoogleCalendarMeta.PathType.ALL_DAY_EVENT.ordinal());
+		matcher.addURI(GoogleCalendarMeta.AUTHORITY,
+				GoogleCalendarMeta.PATH_SINGLE_ALL_DAY_EVENT,
+				GoogleCalendarMeta.PathType.SINGLE_ALL_DAY_EVENT.ordinal());
+		matcher.addURI(GoogleCalendarMeta.AUTHORITY,
+				GoogleCalendarMeta.PATH_HAVE_ALL_DAY_EVENT,
+				GoogleCalendarMeta.PathType.HAVE_ALL_DAY_EVENT.ordinal());
 	}
 
 	protected DatabaseHelper db;
@@ -110,10 +116,13 @@ public class GoogleCalendarProvider extends ContentProvider {
 		int match = matcher.match(uri);
 		GoogleCalendarMeta.PathType pathType = GoogleCalendarMeta.PathType.class
 				.getEnumConstants()[match];
+		List<?> segments;
+		String id;
+
 		switch (pathType) {
 		case SINGLE_CALENDAR:
-			List<?> segments = uri.getPathSegments();
-			String id = (String) segments.get(0);
+			segments = uri.getPathSegments();
+			id = (String) segments.get(0);
 			result = builder.query(db.getReadableDatabase(), projection,
 					GoogleCalendarMeta.TableAlarmColumns.COL_ID + "=?",
 					new String[] { id }, null, null, order);
@@ -128,6 +137,38 @@ public class GoogleCalendarProvider extends ContentProvider {
 		// GoogleCalendarMeta.TableAlarmColumns.COL_SCHEDULED + "=?",
 		// new String[] { "1" }, null, null, order);
 		// break;
+		case SINGLE_ALL_DAY_EVENT:
+			segments = uri.getPathSegments();
+			id = (String) segments.get(1);
+			result = builder
+					.query(db.getReadableDatabase(),
+							projection,
+							GoogleCalendarMeta.TableAlarmColumns.COL_KIND
+									+ "=?"
+									+ " AND "
+									+ GoogleCalendarMeta.TableAlarmColumns.COL_CALENDAR_ID
+									+ "=?",
+							new String[] { "calendar#event", id }, null, null,
+							order);
+			break;
+		case HAVE_ALL_DAY_EVENT:
+			segments = uri.getPathSegments();
+			id = (String) segments.get(1);
+			String withinToday = String.format("? between %s and %s ",
+					GoogleCalendarMeta.TableAlarmColumns.COL_START_TIME,
+					GoogleCalendarMeta.TableAlarmColumns.COL_END_TIME);
+			result = builder
+					.query(db.getReadableDatabase(),
+							projection,
+							GoogleCalendarMeta.TableAlarmColumns.COL_KIND
+									+ "=?"
+									+ " AND "
+									+ GoogleCalendarMeta.TableAlarmColumns.COL_CALENDAR_ID
+									+ "=?" + " AND " + withinToday,
+							new String[] { "calendar#event", id,
+									"" + System.currentTimeMillis() }, null,
+							null, order);
+			break;
 		case ALL_CALENDARS:
 			result = builder.query(db.getReadableDatabase(), projection,
 					GoogleCalendarMeta.TableAlarmColumns.COL_KIND + "=?",

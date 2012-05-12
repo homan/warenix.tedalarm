@@ -108,6 +108,8 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 		ft.commit();
 		// testTedAlarmProvider();
 		// testHolidayProvider();
+		// testCalendarProvider();
+		testAlarmMaster();
 	}
 
 	private void testTedAlarmProvider() {
@@ -161,7 +163,7 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 	}
 
 	void testHolidayProvider() {
-		Uri empsUri = Uri.parse("content://tedalarm/holidays/" + 123);
+		Uri empsUri = Uri.parse("content://tedalarm/holidays/" + 70);
 		ContentValues cvs = null;
 
 		// WLog.i(TAG, String.format("test insert"));
@@ -173,21 +175,60 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 		// Uri newAlarm = getContentResolver().insert(empsUri, cvs);
 		// WLog.d(TAG, String.format("new uri[%s]", newAlarm));
 
-		// // test query
-		// Cursor cursor = getContentResolver().query(empsUri, null, null, null,
-		// null);
-		// if (cursor == null) {
-		// WLog.i(TAG, String.format("cursor is null"));
-		// } else {
-		// WLog.d(TAG, String.format("cursor count[%d]", cursor.getCount()));
-		// }
+		// test query
+		Cursor cursor = getContentResolver().query(empsUri, null, null, null,
+				null);
+		if (cursor == null) {
+			WLog.i(TAG, String.format("cursor is null"));
+		} else {
+			WLog.d(TAG, String.format("cursor count[%d]", cursor.getCount()));
+		}
 
-		WLog.i(TAG, String.format("test delete"));
+		// WLog.i(TAG, String.format("test delete"));
 		// delete employee of id 8
 		// rowsNumber = getContentResolver().delete(deleteUri,
 		// TedAlarmMeta.TableAlarm.COL_ID + "=?", new String[] { "1" });
-		int rowsNumber = getContentResolver().delete(empsUri, null, null);
-		WLog.i(TAG, String.format("test delete row[%d]", rowsNumber));
+		// int rowsNumber = getContentResolver().delete(empsUri, null, null);
+		// WLog.i(TAG, String.format("test delete row[%d]", rowsNumber));
+	}
+
+	void testCalendarProvider() {
+		Uri empsUri = Uri.parse("content://googlecalendar/have_all_day_event/"
+				+ "g28ov7hrvueikp331385v52mms@group.calendar.google.com");
+		ContentValues cvs = null;
+
+		// WLog.i(TAG, String.format("test insert"));
+		// cvs = new ContentValues();
+		// cvs.put(TedAlarmMeta.TableHolidayColumns.COL_ALARM_ID, "123");
+		// cvs.put(TedAlarmMeta.TableHolidayColumns.COL_CALENDAR_ID,
+		// "cal_123a");
+		// // URi of the new inserted item
+		// Uri newAlarm = getContentResolver().insert(empsUri, cvs);
+		// WLog.d(TAG, String.format("new uri[%s]", newAlarm));
+
+		// test query
+		Cursor cursor = getContentResolver().query(empsUri, null, null, null,
+				null);
+		if (cursor == null) {
+			WLog.i(TAG, String.format("cursor is null"));
+		} else {
+			WLog.d(TAG, String.format("cursor count[%d]", cursor.getCount()));
+		}
+
+		// WLog.i(TAG, String.format("test delete"));
+		// delete employee of id 8
+		// rowsNumber = getContentResolver().delete(deleteUri,
+		// TedAlarmMeta.TableAlarm.COL_ID + "=?", new String[] { "1" });
+		// int rowsNumber = getContentResolver().delete(empsUri, null, null);
+		// WLog.i(TAG, String.format("test delete row[%d]", rowsNumber));
+	}
+
+	void testAlarmMaster() {
+		TedAlarm alarm = AlarmMaster.restoryAlarmById(getApplicationContext(),
+				7);
+		boolean isHoliday = AlarmMaster.isTodayHoliday(getApplicationContext(),
+				alarm);
+		WLog.d(TAG, String.format("today is holiday[%s]", isHoliday));
 	}
 
 	@Override

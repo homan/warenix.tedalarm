@@ -41,6 +41,7 @@ public class CalendarList {
 			item.colorId = JSONUtil.getString(json, "colorId", null);
 			item.selected = JSONUtil.getString(json, "selected", null);
 			item.accessRole = JSONUtil.getString(json, "accessRole", null);
+
 			return item;
 		}
 	}

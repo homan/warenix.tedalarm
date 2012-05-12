@@ -32,7 +32,8 @@ public class AlarmMaster {
 	public static void actionStartAlarmRing(Context context, Uri alarmUri) {
 		Intent intent = new Intent(context, TedAlarmActivity.class);
 		intent.setData(alarmUri);
-		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+				| Intent.FLAG_ACTIVITY_NO_HISTORY);
 		context.startActivity(intent);
 	}
 
@@ -411,6 +412,17 @@ public class AlarmMaster {
 		return alarmId;
 	}
 
+	public static boolean haveAllDayEvent(Context context, String calendarId) {
+		Uri empsUri = Uri.parse("content://googlecalendar/have_all_day_event/"
+				+ "g28ov7hrvueikp331385v52mms@group.calendar.google.com");
+		Cursor cursor = context.getContentResolver().query(empsUri, null, null,
+				null, null);
+		if (cursor != null) {
+			return cursor.getCount() > 0;
+		}
+		return false;
+	}
+
 	/**
 	 * check today is holiday as chosen by the alarm
 	 * 
@@ -420,6 +432,13 @@ public class AlarmMaster {
 	public static boolean isTodayHoliday(Context context, TedAlarm alarm) {
 		if (alarm != null) {
 			// TODO implement check calendars event
+			ArrayList<String> calendarIdList = getCalendarIdOfAlarm(context,
+					alarm.id);
+			for (String calendarId : calendarIdList) {
+				if (haveAllDayEvent(context, calendarId)) {
+					return true;
+				}
+			}
 			return false;
 		}
 		return true;

@@ -167,6 +167,8 @@ public class SyncFragment extends SherlockFragment {
 				calendarListItem.startTime);
 		cvs.put(GoogleCalendarMeta.TableAlarmColumns.COL_END_TIME,
 				calendarListItem.endTime);
+		cvs.put(GoogleCalendarMeta.TableAlarmColumns.COL_CALENDAR_ID,
+				calendarListItem.calendarId);
 		return cvs;
 	}
 

@@ -30,6 +30,7 @@ public class EventList {
 		public String accessRole;
 		public long startTime;
 		public long endTime;
+		public String calendarId;
 
 		public static EventListItem factory(String jsonString) {
 			JSONObject json;
@@ -68,6 +69,11 @@ public class EventList {
 					str = JSONUtil.getString(dateTimeJson, "date", null);
 				}
 				item.endTime = parseDateTime(str);
+			} catch (JSONException e) {
+			}
+			try {
+				JSONObject origanizer = json.getJSONObject("organizer");
+				item.calendarId = JSONUtil.getString(origanizer, "email", null);
 			} catch (JSONException e) {
 			}
 
