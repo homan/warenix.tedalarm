@@ -1,5 +1,6 @@
 package org.dyndns.warenix.tedalarm;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -139,6 +140,12 @@ public class AlarmMaster {
 			triggerAtTime = alarmDate.getTime();
 		}
 		return triggerAtTime;
+	}
+
+	public static String formatAlarmTime(long startTime) {
+		Date d = new Date(startTime);
+		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+		return sdf.format(d);
 	}
 
 	/**
@@ -402,6 +409,20 @@ public class AlarmMaster {
 		List<String> segments = insertUri.getPathSegments();
 		long alarmId = Long.parseLong(segments.get(0));
 		return alarmId;
+	}
+
+	/**
+	 * check today is holiday as chosen by the alarm
+	 * 
+	 * @param alarm
+	 * @return
+	 */
+	public static boolean isTodayHoliday(Context context, TedAlarm alarm) {
+		if (alarm != null) {
+			// TODO implement check calendars event
+			return false;
+		}
+		return true;
 	}
 
 }

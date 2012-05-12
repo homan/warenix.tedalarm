@@ -21,7 +21,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.TimePicker;
 
 import com.actionbarsherlock.app.SherlockFragment;
@@ -41,11 +41,14 @@ public class AlarmRingFragment extends SherlockFragment implements
 
 	public static final String BUNDLE_ALARM_ID = "alarm_id";
 
-	EditText mDescription;
+	TextView mDescription;
 	TimePicker mStartTime;
 	Button mStop;
 
 	MediaPlayer mMediaPlayer;
+
+	TedAlarm mAlarm;
+	AlarmRingListener mListener;
 
 	private static class InputParam {
 		long alarmId;
@@ -53,8 +56,10 @@ public class AlarmRingFragment extends SherlockFragment implements
 
 	protected InputParam mInputParam = new InputParam();
 
-	public static AlarmRingFragment newInstance(Bundle args) {
+	public static AlarmRingFragment newInstance(AlarmRingListener listener,
+			Bundle args) {
 		AlarmRingFragment f = new AlarmRingFragment();
+		f.mListener = listener;
 		f.setArguments(args);
 		return f;
 	}
@@ -65,6 +70,9 @@ public class AlarmRingFragment extends SherlockFragment implements
 
 		Bundle args = getArguments();
 		readInputBundle(args);
+
+		mAlarm = AlarmMaster.restoryAlarmById(getActivity(),
+				mInputParam.alarmId);
 	}
 
 	@Override
@@ -77,28 +85,31 @@ public class AlarmRingFragment extends SherlockFragment implements
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 
-		// We have a menu item to show in action bar.
-		setHasOptionsMenu(true);
+		if (AlarmMaster.isTodayHoliday(getActivity(), mAlarm)) {
+			if (mListener != null) {
+				WLog.d(TAG,
+						String.format("stop alarm because today is holiday"));
+				mListener.onStopAlarm(AlarmRingListener.STOP_REASON_HOLIDAY);
+			}
+		} else {
+			// We have a menu item to show in action bar.
+			setHasOptionsMenu(true);
 
-		initView(getView());
-		bindView();
-		playSound(getActivity(), getAlarmUri());
+			initView(getView());
+			bindView();
+			playSound(getActivity(), getAlarmUri());
+		}
 		updateAlarmIfOneShot();
 	}
 
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-		inflater.inflate(R.menu.alarm_edit_menu, menu);
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		int id = item.getItemId();
 		switch (id) {
-		case R.id.menu_save:
-			return true;
-		case R.id.menu_delete:
-			return true;
 		}
 		return super.onOptionsItemSelected(item);
 	}
@@ -110,7 +121,7 @@ public class AlarmRingFragment extends SherlockFragment implements
 	}
 
 	void initView(View view) {
-		mDescription = (EditText) view.findViewById(R.id.description);
+		mDescription = (TextView) view.findViewById(R.id.description);
 		mStartTime = (TimePicker) view.findViewById(R.id.start_time);
 		mStop = (Button) view.findViewById(R.id.stop);
 	}
@@ -171,6 +182,10 @@ public class AlarmRingFragment extends SherlockFragment implements
 			mMediaPlayer.stop();
 			mMediaPlayer = null;
 		}
+
+		if (mListener != null) {
+			mListener.onStopAlarm(AlarmRingListener.STOP_REASON_USER_STOP);
+		}
 	}
 
 	private void playSound(Context context, Uri alert) {
@@ -219,6 +234,16 @@ public class AlarmRingFragment extends SherlockFragment implements
 			// it is a one shot alarm
 			AlarmMaster.saveAlarm(getActivity(), alarm);
 		}
+	}
+
+	public interface AlarmRingListener {
+		public static final int STOP_REASON_USER_STOP = 1;
+		public static final int STOP_REASON_HOLIDAY = 2;
+
+		/**
+		 * when user stop the alarm
+		 */
+		public void onStopAlarm(int reasonCode);
 	}
 
 }

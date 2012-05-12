@@ -11,6 +11,7 @@ import org.dyndns.warenix.tedalarm.ui.AlarmEditFragment.AlarmEditListener;
 import org.dyndns.warenix.tedalarm.ui.AlarmListFragment;
 import org.dyndns.warenix.tedalarm.ui.AlarmListFragment.AlarmListListener;
 import org.dyndns.warenix.tedalarm.ui.AlarmRingFragment;
+import org.dyndns.warenix.tedalarm.ui.AlarmRingFragment.AlarmRingListener;
 import org.dyndns.warenix.tedalarm.ui.SyncFragment;
 import org.dyndns.warenix.util.WLog;
 
@@ -35,7 +36,7 @@ import com.actionbarsherlock.app.SherlockFragmentActivity;
  * 
  */
 public class TedAlarmActivity extends SherlockFragmentActivity implements
-		AlarmListListener, AlarmEditListener {
+		AlarmListListener, AlarmEditListener, AlarmRingListener {
 
 	static {
 		WLog.setAppName("tedalarm");
@@ -51,13 +52,20 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 	 */
 	private static final int MESSAGE_ALARM_SAVED = 1;
 	private static final int MESSAGE_ALARM_DELETED = 2;
+	private static final int MESSAGE_ALARM_CANCELLED = 3;
+	private static final int MESSAGE_ALARM_RING_STOPPED_USER_STOP = 11;
+	private static final int MESSAGE_ALARM_RING_STOPPED_HOLIDAY = 12;
 
 	private Handler mHideEditAlarmViewHandler = new Handler() {
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
 			case MESSAGE_ALARM_DELETED:
 			case MESSAGE_ALARM_SAVED:
+			case MESSAGE_ALARM_CANCELLED:
 				onBackPressed();
+				break;
+			case MESSAGE_ALARM_RING_STOPPED_HOLIDAY:
+				finish();
 				break;
 			}
 
@@ -77,7 +85,7 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 		Uri alarmUri = getIntent().getData();
 		// // test data
 		// TedAlarm alarm = new TedAlarm();
-		// alarm.id = 9;
+		// alarm.id = 14;
 		// alarmUri = AlarmMaster.convertAlarmToUri(alarm);
 		if (alarmUri != null) {
 			List<?> segments = alarmUri.getPathSegments();
@@ -85,7 +93,7 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 			Bundle args = AlarmRingFragment.prepareAlarmRingBundle(Long
 					.parseLong(id));
 			AlarmRingFragment alarmRingFragment = AlarmRingFragment
-					.newInstance(args);
+					.newInstance(this, args);
 			showFragment(alarmRingFragment, true);
 		}
 
@@ -257,4 +265,19 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 		}.start();
 	}
 
+	@Override
+	public void onCancel() {
+		mHideEditAlarmViewHandler.sendEmptyMessage(MESSAGE_ALARM_CANCELLED);
+	}
+
+	@Override
+	public void onStopAlarm(int reasonCode) {
+		if (AlarmRingListener.STOP_REASON_HOLIDAY == reasonCode) {
+			mHideEditAlarmViewHandler
+					.sendEmptyMessage(MESSAGE_ALARM_RING_STOPPED_HOLIDAY);
+		} else if (AlarmRingListener.STOP_REASON_USER_STOP == reasonCode) {
+			mHideEditAlarmViewHandler
+					.sendEmptyMessage(MESSAGE_ALARM_RING_STOPPED_USER_STOP);
+		}
+	}
 }

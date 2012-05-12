@@ -1,11 +1,11 @@
 package org.dyndns.warenix.tedalarm.ui;
 
+import org.dyndns.warenix.tedalarm.AlarmMaster;
 import org.dyndns.warenix.tedalarm.R;
-import org.dyndns.warenix.tedalarm.provider.TedAlarmMeta;
+import org.dyndns.warenix.tedalarm.TedAlarm;
 import org.dyndns.warenix.util.WLog;
 
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckedTextView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockListFragment;
 import com.actionbarsherlock.view.Menu;
@@ -114,8 +115,7 @@ public class AlarmListFragment extends SherlockListFragment implements
 		// currently filtering.
 
 		Uri empsUri = Uri.parse("content://tedalarm");
-		return new CursorLoader(getActivity(), empsUri,
-				TedAlarmMeta.ALL_ALARM_LIST_PROJECTION, null, null, null);
+		return new CursorLoader(getActivity(), empsUri, null, null, null, null);
 	}
 
 	public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
@@ -176,19 +176,19 @@ public class AlarmListFragment extends SherlockListFragment implements
 
 		static class ViewHolder {
 			CheckedTextView description;
+			TextView startTime;
 		}
 
 		@Override
 		public void bindView(View view, Context context, Cursor c) {
-			String description = c
-					.getString(c
-							.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_DESCRIPTION));
-			boolean scheduled = c
-					.getLong(c
-							.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_SCHEDULED)) == 1;
-			ViewHolder viewHolder = (ViewHolder) view.getTag();
-			viewHolder.description.setText(description);
-			viewHolder.description.setChecked(scheduled);
+			TedAlarm alarm = AlarmMaster.createAlarmFromCursor(c);
+			if (alarm != null) {
+				ViewHolder viewHolder = (ViewHolder) view.getTag();
+				viewHolder.description.setText(alarm.description);
+				viewHolder.description.setChecked(alarm.scheduled == 1);
+				viewHolder.startTime.setText(AlarmMaster
+						.formatAlarmTime(alarm.startTime));
+			}
 		}
 
 		@Override
@@ -200,6 +200,7 @@ public class AlarmListFragment extends SherlockListFragment implements
 			ViewHolder viewHolder = new ViewHolder();
 			viewHolder.description = (CheckedTextView) v
 					.findViewById(R.id.description);
+			viewHolder.startTime = (TextView) v.findViewById(R.id.start_time);
 			v.setTag(viewHolder);
 			return (v);
 		}

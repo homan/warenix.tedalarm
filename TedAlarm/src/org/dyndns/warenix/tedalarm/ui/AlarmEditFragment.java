@@ -139,7 +139,12 @@ public class AlarmEditFragment extends SherlockFragment implements
 
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-		inflater.inflate(R.menu.alarm_edit_menu, menu);
+		if (ACTION_TYPE_NEW_ALARM == mInputParam.actionType) {
+			inflater.inflate(R.menu.alarm_new_menu, menu);
+		} else if (ACTION_TYPE_EDIT_ALARM == mInputParam.actionType) {
+			inflater.inflate(R.menu.alarm_edit_menu, menu);
+		}
+		super.onCreateOptionsMenu(menu, inflater);
 	}
 
 	@Override
@@ -156,6 +161,9 @@ public class AlarmEditFragment extends SherlockFragment implements
 			return true;
 		case R.id.menu_delete:
 			onDelete();
+			return true;
+		case R.id.menu_cancel:
+			onCancel();
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
@@ -324,6 +332,10 @@ public class AlarmEditFragment extends SherlockFragment implements
 		}
 	}
 
+	@Override
+	public void onCancel() {
+	}
+
 	/**
 	 * listener will be notified to event occurs about editing an alarm
 	 * 
@@ -345,6 +357,11 @@ public class AlarmEditFragment extends SherlockFragment implements
 		 * @param alarm
 		 */
 		public void onDelete(TedAlarm alarm);
+
+		/**
+		 * when user do not want to add a new alarm
+		 */
+		public void onCancel();
 	}
 
 	// OnDateSetListener
@@ -413,10 +430,6 @@ public class AlarmEditFragment extends SherlockFragment implements
 			return checkedCalendarList;
 		}
 		return null;
-	}
-
-	@Override
-	public void onCancel() {
 	}
 
 }
