@@ -88,6 +88,7 @@ public class TedAlarmMeta {
 	 * projection for displaying alarm in a list
 	 */
 	public static final String[] ALL_ALARM_LIST_PROJECTION = new String[] {
-			TableAlarmColumns.COL_ID, TableAlarmColumns.COL_DESCRIPTION };
+			TableAlarmColumns.COL_ID, TableAlarmColumns.COL_DESCRIPTION,
+			TableAlarmColumns.COL_SCHEDULED };
 
 }

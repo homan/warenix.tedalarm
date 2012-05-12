@@ -3,6 +3,7 @@ package org.dyndns.warenix.tedalarm;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import org.dyndns.warenix.com.google.calendar.CalendarList.CalendarListItem;
 import org.dyndns.warenix.tedalarm.app.TedAlarmActivity;
@@ -292,12 +293,115 @@ public class AlarmMaster {
 	public static void removeAllAlarmHoliday(Context context, TedAlarm alarm) {
 		if (alarm.holidayList != null) {
 			Uri empsUri = Uri.parse("content://tedalarm/holidays/" + alarm.id);
-			ContentValues cvs;
-
-			cvs = new ContentValues();
-			int rowsNumber = context.getContentResolver().delete(empsUri, null,
-					null);
-			WLog.i(TAG, String.format("test delete row[%d]", rowsNumber));
+			int rowsAffected = context.getContentResolver().delete(empsUri,
+					null, null);
+			WLog.i(TAG, String.format("test delete row[%d]", rowsAffected));
 		}
 	}
+
+	public static TedAlarm restoryAlarmById(Context context, long id) {
+		Uri empsUri = Uri.parse(String.format("content://tedalarm/%d", id));
+		Cursor cursor = null;
+		cursor = context.getContentResolver().query(empsUri, null, null, null,
+				null);
+		if (cursor == null) {
+			WLog.i(TAG, String.format("cursor is null"));
+			return null;
+		}
+
+		if (cursor.moveToFirst()) {
+			return createAlarmFromCursor(cursor);
+		}
+		return null;
+	}
+
+	/**
+	 * insert a new or update an existing alarm, determined by alarm is having
+	 * alarm.id or not.
+	 * 
+	 * @param context
+	 * @param alarm
+	 * @return true if saved
+	 */
+	public static TedAlarm saveAlarm(Context context, TedAlarm alarm) {
+		if (alarm.id != 0) {
+			// update
+			if (updateAlarm(context, alarm)) {
+				return alarm;
+			}
+		} else {
+			return insertAlarm(context, alarm);
+		}
+		return null;
+	}
+
+	/**
+	 * update an existing alarm to database.
+	 * 
+	 * @param context
+	 * @param alarm
+	 * @return whether any row is updated
+	 */
+	public static boolean updateAlarm(Context context, TedAlarm alarm) {
+		ContentValues cvs = prepareContentValuesFromAlarm(alarm);
+		Uri updateUri = Uri.parse(String.format("content://tedalarm/%d",
+				alarm.id));
+
+		int rowsNumber = context.getContentResolver().update(updateUri, cvs,
+				null, null);
+		return rowsNumber > 0;
+	}
+
+	/**
+	 * insert an alarm to database.
+	 * 
+	 * @param context
+	 * @param alarm
+	 * @return alarm object with id filled. null if failed.
+	 */
+	public static TedAlarm insertAlarm(Context context, TedAlarm alarm) {
+		ContentValues cvs = prepareContentValuesFromAlarm(alarm);
+
+		Uri insertUri = Uri.parse("content://tedalarm");
+		Uri newUri = context.getContentResolver().insert(insertUri, cvs);
+		WLog.i(TAG, String.format("inserted alarm to url[%s]", newUri));
+
+		long alarmId = parseAlarmIdFromInsertUri(newUri);
+		if (alarmId != -1) {
+			alarm.id = alarmId;
+			return alarm;
+		}
+		return null;
+	}
+
+	public static boolean deleteAlarm(Context context, TedAlarm alarm) {
+		Uri deleteUri = Uri.parse(String.format("content://tedalarm/%d",
+				alarm.id));
+		int rowsAffected = context.getContentResolver().delete(deleteUri, null,
+				null);
+		return rowsAffected > 0;
+	}
+
+	public static ContentValues prepareContentValuesFromAlarm(TedAlarm alarm) {
+		ContentValues cvs;
+
+		cvs = new ContentValues();
+		if (alarm.id != 0) {
+			cvs.put(TedAlarmMeta.TableAlarmColumns.COL_ID, alarm.id);
+		}
+		cvs.put(TedAlarmMeta.TableAlarmColumns.COL_DESCRIPTION,
+				alarm.description);
+		cvs.put(TedAlarmMeta.TableAlarmColumns.COL_REPEAT_MASK,
+				alarm.repeatMask);
+		cvs.put(TedAlarmMeta.TableAlarmColumns.COL_SCHEDULED, alarm.scheduled);
+		cvs.put(TedAlarmMeta.TableAlarmColumns.COL_START_TIME, alarm.startTime);
+		return cvs;
+	}
+
+	public static long parseAlarmIdFromInsertUri(Uri insertUri) {
+		List<String> segments = insertUri.getPathSegments();
+		long alarmId = Long.parseLong(segments.get(0));
+		return alarmId;
+	}
+
 }

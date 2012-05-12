@@ -4,14 +4,19 @@ import org.dyndns.warenix.tedalarm.R;
 import org.dyndns.warenix.tedalarm.provider.TedAlarmMeta;
 import org.dyndns.warenix.util.WLog;
 
+import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.support.v4.widget.SimpleCursorAdapter;
+import android.support.v4.widget.CursorAdapter;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.CheckedTextView;
 import android.widget.ListView;
 
 import com.actionbarsherlock.app.SherlockListFragment;
@@ -31,7 +36,7 @@ public class AlarmListFragment extends SherlockListFragment implements
 	private static final String TAG = "AlarmListFragment";
 
 	// This is the Adapter being used to display the list's data.
-	SimpleCursorAdapter mAdapter;
+	AlarmListAdapter mAdapter;
 
 	// If non-null, this is the current filter the user has provided.
 	String mCurFilter;
@@ -57,12 +62,7 @@ public class AlarmListFragment extends SherlockListFragment implements
 		setHasOptionsMenu(true);
 
 		// Create an empty adapter we will use to display the loaded data.
-		mAdapter = new SimpleCursorAdapter(
-				getActivity(),
-				android.R.layout.simple_list_item_1,
-				null,
-				new String[] { TedAlarmMeta.TableAlarmColumns.COL_DESCRIPTION },
-				new int[] { android.R.id.text1 }, 0);
+		mAdapter = new AlarmListAdapter(getActivity(), null);
 		setListAdapter(mAdapter);
 
 		// Start out with a progress indicator.
@@ -158,6 +158,51 @@ public class AlarmListFragment extends SherlockListFragment implements
 
 	public void onRefresh() {
 		getLoaderManager().restartLoader(0, null, this);
+	}
+
+	static class AlarmListAdapter extends CursorAdapter {
+
+		public AlarmListAdapter(Context context, Cursor c) {
+			super(context, c);
+		}
+
+		public AlarmListAdapter(Context context, Cursor c, boolean autoRequery) {
+			super(context, c, autoRequery);
+		}
+
+		public AlarmListAdapter(Context context, Cursor c, int flags) {
+			super(context, c, flags);
+		}
+
+		static class ViewHolder {
+			CheckedTextView description;
+		}
+
+		@Override
+		public void bindView(View view, Context context, Cursor c) {
+			String description = c
+					.getString(c
+							.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_DESCRIPTION));
+			boolean scheduled = c
+					.getLong(c
+							.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_SCHEDULED)) == 1;
+			ViewHolder viewHolder = (ViewHolder) view.getTag();
+			viewHolder.description.setText(description);
+			viewHolder.description.setChecked(scheduled);
+		}
+
+		@Override
+		public View newView(Context context, Cursor c, ViewGroup parent) {
+			LayoutInflater inflater = (LayoutInflater) context
+					.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			View v = inflater.inflate(R.layout.alarm_list_item, null);
+
+			ViewHolder viewHolder = new ViewHolder();
+			viewHolder.description = (CheckedTextView) v
+					.findViewById(R.id.description);
+			v.setTag(viewHolder);
+			return (v);
+		}
 	}
 
 }

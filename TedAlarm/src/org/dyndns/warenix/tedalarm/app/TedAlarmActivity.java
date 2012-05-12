@@ -75,9 +75,9 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 		showFragment(alarmListFragment, false);
 
 		Uri alarmUri = getIntent().getData();
-		// test data
+		// // test data
 		// TedAlarm alarm = new TedAlarm();
-		// alarm.id = 18;
+		// alarm.id = 9;
 		// alarmUri = AlarmMaster.convertAlarmToUri(alarm);
 		if (alarmUri != null) {
 			List<?> segments = alarmUri.getPathSegments();
@@ -226,39 +226,15 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 
 		new Thread() {
 			public void run() {
-				WLog.i(TAG, String.format("insert/update alarm"));
-				ContentValues cvs;
-				Uri updateUri = Uri.parse(String.format(
-						"content://tedalarm/%d", alarm.id));
-
-				cvs = new ContentValues();
-				cvs.put(TedAlarmMeta.TableAlarmColumns.COL_DESCRIPTION,
-						alarm.description);
-				cvs.put(TedAlarmMeta.TableAlarmColumns.COL_REPEAT_MASK,
-						alarm.repeatMask);
-				cvs.put(TedAlarmMeta.TableAlarmColumns.COL_SCHEDULED,
-						alarm.scheduled);
-				cvs.put(TedAlarmMeta.TableAlarmColumns.COL_START_TIME,
-						alarm.startTime);
-
-				if (actionType == AlarmEditFragment.ACTION_TYPE_EDIT_ALARM) {
-					int rowsNumber = getContentResolver().update(updateUri,
-							cvs, null, null);
-					WLog.i(TAG,
-							String.format("updated alarm row[%d]", rowsNumber));
-				} else if (actionType == AlarmEditFragment.ACTION_TYPE_NEW_ALARM) {
-					Uri insertUri = Uri.parse("content://tedalarm");
-					Uri newUri = getContentResolver().insert(insertUri, cvs);
-					WLog.i(TAG,
-							String.format("inserted alarm to url[%s]", newUri));
-					List<String> segments = newUri.getPathSegments();
-					alarm.id = Long.parseLong(segments.get(0));
-				}
-
+				WLog.i(TAG, String.format("save alarm"));
+				TedAlarm savedAlarm = AlarmMaster.saveAlarm(
+						getApplicationContext(), alarm);
 				AlarmMaster.removeAllAlarmHoliday(getApplicationContext(),
-						alarm);
-				AlarmMaster.addAllAlarmHoliday(getApplicationContext(), alarm);
-				AlarmMaster.rescheduleAlarm(getApplicationContext(), alarm);
+						savedAlarm);
+				AlarmMaster.addAllAlarmHoliday(getApplicationContext(),
+						savedAlarm);
+				AlarmMaster
+						.rescheduleAlarm(getApplicationContext(), savedAlarm);
 
 				mHideEditAlarmViewHandler.sendEmptyMessage(MESSAGE_ALARM_SAVED);
 			}
@@ -270,12 +246,8 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 	public void onDelete(final TedAlarm alarm) {
 		new Thread() {
 			public void run() {
-				Uri deleteUri = Uri.parse(String.format(
-						"content://tedalarm/%d", alarm.id));
-				int rowsNumber = getContentResolver().delete(deleteUri, null,
-						null);
-				WLog.i(TAG, String.format("test delete row[%d]", rowsNumber));
-
+				AlarmMaster.cancelAlarm(getApplicationContext(), alarm);
+				AlarmMaster.deleteAlarm(getApplicationContext(), alarm);
 				AlarmMaster.removeAllAlarmHoliday(getApplicationContext(),
 						alarm);
 

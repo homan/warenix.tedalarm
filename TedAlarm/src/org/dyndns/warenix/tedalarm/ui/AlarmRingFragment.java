@@ -3,7 +3,9 @@ package org.dyndns.warenix.tedalarm.ui;
 import java.io.IOException;
 import java.util.Date;
 
+import org.dyndns.warenix.tedalarm.AlarmMaster;
 import org.dyndns.warenix.tedalarm.R;
+import org.dyndns.warenix.tedalarm.TedAlarm;
 import org.dyndns.warenix.tedalarm.provider.TedAlarmMeta;
 import org.dyndns.warenix.util.WLog;
 
@@ -27,6 +29,12 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 
+/**
+ * When alarm is times up.
+ * 
+ * @author warenix
+ * 
+ */
 public class AlarmRingFragment extends SherlockFragment implements
 		OnClickListener {
 	private static final String TAG = "AlarmRingFragment";
@@ -75,6 +83,7 @@ public class AlarmRingFragment extends SherlockFragment implements
 		initView(getView());
 		bindView();
 		playSound(getActivity(), getAlarmUri());
+		updateAlarmIfOneShot();
 	}
 
 	@Override
@@ -123,13 +132,16 @@ public class AlarmRingFragment extends SherlockFragment implements
 			return;
 		}
 		WLog.d(TAG, String.format("cursor count[%d]", cursor.getCount()));
-		mDescription
-				.setText(cursor.getString(cursor
-						.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_DESCRIPTION)));
+		if (cursor.moveToFirst()) {
+			mDescription
+					.setText(cursor.getString(cursor
+							.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_DESCRIPTION)));
 
-		long startTimeMs = cursor.getLong(cursor
-				.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_START_TIME));
-		bindStartTimeView(startTimeMs);
+			long startTimeMs = cursor
+					.getLong(cursor
+							.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_START_TIME));
+			bindStartTimeView(startTimeMs);
+		}
 		cursor.close();
 	}
 
@@ -197,6 +209,16 @@ public class AlarmRingFragment extends SherlockFragment implements
 	public void onDetach() {
 		onStopClicked();
 		super.onDetach();
+	}
+
+	void updateAlarmIfOneShot() {
+		TedAlarm alarm = AlarmMaster.restoryAlarmById(getActivity(),
+				mInputParam.alarmId);
+		if (alarm != null && alarm.repeatMask == 0) {
+			alarm.scheduled = 0;
+			// it is a one shot alarm
+			AlarmMaster.saveAlarm(getActivity(), alarm);
+		}
 	}
 
 }
