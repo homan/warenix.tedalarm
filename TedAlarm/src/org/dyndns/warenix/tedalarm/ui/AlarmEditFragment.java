@@ -9,13 +9,11 @@ import org.dyndns.warenix.com.google.calendar.GoogleCalendarMaster;
 import org.dyndns.warenix.tedalarm.AlarmMaster;
 import org.dyndns.warenix.tedalarm.R;
 import org.dyndns.warenix.tedalarm.TedAlarm;
-import org.dyndns.warenix.tedalarm.app.TedAlarmActivity;
 import org.dyndns.warenix.tedalarm.provider.TedAlarmMeta;
 import org.dyndns.warenix.tedalarm.ui.CheckboxDialogFragment.OnCheckboxDialogListener;
 import org.dyndns.warenix.util.WLog;
 
 import android.app.DatePickerDialog.OnDateSetListener;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -151,11 +149,9 @@ public class AlarmEditFragment extends SherlockFragment implements
 	public boolean onOptionsItemSelected(MenuItem item) {
 		int id = item.getItemId();
 		switch (id) {
-		case android.R.id.home:
-			Intent intent = new Intent(getActivity(), TedAlarmActivity.class);
-			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-			startActivity(intent);
-			return true;
+		// case android.R.id.home:
+		// AlarmMaster.actionStartAlarmRing(getActivity(), null);
+		// return true;
 		case R.id.menu_save:
 			onSave();
 			return true;

@@ -28,6 +28,7 @@ import android.support.v4.app.FragmentTransaction;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.MenuItem;
 
 /**
  * Main activity to for user to interact. It will change different ui views
@@ -104,6 +105,25 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
 		determineAlarmRing(intent);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		int id = item.getItemId();
+		switch (id) {
+		case android.R.id.home:
+			showAlarmListFragment();
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
+	}
+
+	private void showAlarmListFragment() {
+		int displayOption = getSupportActionBar().getDisplayOptions();
+		boolean isHomeAsUp = (displayOption & ActionBar.DISPLAY_HOME_AS_UP) != 0;
+		if (isHomeAsUp) {
+			this.onBackPressed();
+		}
 	}
 
 	private void determineAlarmRing(Intent intent) {
