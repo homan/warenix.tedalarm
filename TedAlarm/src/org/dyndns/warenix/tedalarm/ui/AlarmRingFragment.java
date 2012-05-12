@@ -85,21 +85,12 @@ public class AlarmRingFragment extends SherlockFragment implements
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 
-		if (AlarmMaster.isTodayHoliday(getActivity(), mAlarm)) {
-			if (mListener != null) {
-				WLog.d(TAG,
-						String.format("stop alarm because today is holiday"));
-				mListener.onStopAlarm(AlarmRingListener.STOP_REASON_HOLIDAY);
-			}
-		} else {
-			// We have a menu item to show in action bar.
-			setHasOptionsMenu(true);
+		// We have a menu item to show in action bar.
+		setHasOptionsMenu(true);
 
-			initView(getView());
-			bindView();
-			playSound(getActivity(), getAlarmUri());
-		}
-		updateAlarmIfOneShot();
+		initView(getView());
+		bindView();
+		playSound(getActivity(), getAlarmUri());
 	}
 
 	@Override
@@ -196,7 +187,7 @@ public class AlarmRingFragment extends SherlockFragment implements
 					.getSystemService(Context.AUDIO_SERVICE);
 			if (audioManager.getStreamVolume(AudioManager.STREAM_ALARM) != 0) {
 				mMediaPlayer.setAudioStreamType(AudioManager.STREAM_ALARM);
-				mMediaPlayer.setVolume(0.2f, 0.2f);
+				mMediaPlayer.setVolume(0.1f, 0.1f);
 				mMediaPlayer.setLooping(true);
 				mMediaPlayer.prepare();
 				mMediaPlayer.start();
@@ -224,16 +215,6 @@ public class AlarmRingFragment extends SherlockFragment implements
 	public void onDetach() {
 		onStopClicked();
 		super.onDetach();
-	}
-
-	void updateAlarmIfOneShot() {
-		TedAlarm alarm = AlarmMaster.restoryAlarmById(getActivity(),
-				mInputParam.alarmId);
-		if (alarm != null && alarm.repeatMask == 0) {
-			alarm.scheduled = 0;
-			// it is a one shot alarm
-			AlarmMaster.saveAlarm(getActivity(), alarm);
-		}
 	}
 
 	public interface AlarmRingListener {

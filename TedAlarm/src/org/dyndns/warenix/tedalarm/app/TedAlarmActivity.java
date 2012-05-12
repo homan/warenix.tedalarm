@@ -16,6 +16,7 @@ import org.dyndns.warenix.tedalarm.ui.SyncFragment;
 import org.dyndns.warenix.util.WLog;
 
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -82,7 +83,31 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 				.newInstance(this);
 		showFragment(alarmListFragment, false);
 
-		Uri alarmUri = getIntent().getData();
+		// show menu
+		FragmentManager fm = getSupportFragmentManager();
+		FragmentTransaction ft = fm.beginTransaction();
+		mFragment1 = fm.findFragmentByTag("f1");
+		if (mFragment1 == null) {
+			mFragment1 = SyncFragment.newInstance();
+			ft.add(mFragment1, "f1");
+		}
+		ft.commit();
+		// testTedAlarmProvider();
+		// testHolidayProvider();
+		// testCalendarProvider();
+		// testAlarmMaster();
+
+		onNewIntent(getIntent());
+	}
+
+	@Override
+	protected void onNewIntent(Intent intent) {
+		super.onNewIntent(intent);
+		determineAlarmRing(intent);
+	}
+
+	private void determineAlarmRing(Intent intent) {
+		Uri alarmUri = intent.getData();
 		// // test data
 		// TedAlarm alarm = new TedAlarm();
 		// alarm.id = 14;
@@ -96,20 +121,6 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 					.newInstance(this, args);
 			showFragment(alarmRingFragment, true);
 		}
-
-		// show menu
-		FragmentManager fm = getSupportFragmentManager();
-		FragmentTransaction ft = fm.beginTransaction();
-		mFragment1 = fm.findFragmentByTag("f1");
-		if (mFragment1 == null) {
-			mFragment1 = SyncFragment.newInstance();
-			ft.add(mFragment1, "f1");
-		}
-		ft.commit();
-		// testTedAlarmProvider();
-		// testHolidayProvider();
-		// testCalendarProvider();
-		testAlarmMaster();
 	}
 
 	private void testTedAlarmProvider() {

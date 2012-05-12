@@ -195,8 +195,10 @@ public class SyncFragment extends SherlockFragment {
 
 		@Override
 		protected void onPostExecute(Void v) {
-			mProgressFragment.dismiss();
-			mProgressFragment = null;
+			if (mProgressFragment != null && mProgressFragment.isVisible()) {
+				mProgressFragment.dismiss();
+				mProgressFragment = null;
+			}
 		}
 	}
 

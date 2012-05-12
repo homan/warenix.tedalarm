@@ -1,5 +1,6 @@
 package org.dyndns.warenix.tedalarm;
 
+import org.dyndns.warenix.tedalarm.app.TedAlarmService;
 import org.dyndns.warenix.util.WLog;
 
 import android.content.BroadcastReceiver;
@@ -21,7 +22,9 @@ public class AlarmRingReceiver extends BroadcastReceiver {
 		Uri alarmUri = intent.getData();
 		WLog.d(TAG, String.format("received alarm[%s]", alarmUri));
 
-		AlarmMaster.actionStartAlarmRing(context, alarmUri);
+		Intent serviceIntent = new Intent(context, TedAlarmService.class);
+		serviceIntent.setData(alarmUri);
+		context.startService(serviceIntent);
 	}
 
 }
