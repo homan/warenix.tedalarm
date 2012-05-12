@@ -6,9 +6,9 @@
         android:showAsAction="always"
         android:title="Save"/>
     <item
-        android:id="@+id/menu_delete"
-        android:icon="@drawable/delete"
+        android:id="@+id/menu_cancel"
+        android:icon="@drawable/cancel"
         android:showAsAction="ifRoom"
-        android:title="Delete"/>
+        android:title="Cancel"/>
 
 </menu>

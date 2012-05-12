@@ -2,14 +2,13 @@
 
     <item
         android:id="@+id/menu_add"
-        android:icon="@android:drawable/ic_menu_add"
+        android:icon="@drawable/add"
         android:showAsAction="always"
         android:title="Add"/>
-
     <item
         android:id="@+id/menu_refresh"
-        android:icon="@android:drawable/ic_menu_rotate"
+        android:icon="@drawable/reload"
         android:showAsAction="ifRoom"
-        android:title="Add"/>
+        android:title="Reload"/>
 
 </menu>

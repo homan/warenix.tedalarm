@@ -2,9 +2,9 @@
 
     <item
         android:id="@+id/menu_sync"
-        android:icon="@android:drawable/ic_menu_upload"
+        android:icon="@drawable/calendar"
         android:orderInCategory="99"
         android:showAsAction="ifRoom"
-        android:title="Sync"/>
+        android:title="Sync Google Calendar"/>
 
 </menu>
