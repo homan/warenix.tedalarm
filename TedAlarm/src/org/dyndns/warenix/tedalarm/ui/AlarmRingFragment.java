@@ -184,9 +184,9 @@ public class AlarmRingFragment extends SherlockFragment implements
 			mAlarmVolumeAdjsuter = null;
 		}
 
-		synchronized (mMediaPlayer) {
-			WLog.d(TAG, String.format("stop ringing"));
-			if (mMediaPlayer != null) {
+		WLog.d(TAG, String.format("stop ringing"));
+		if (mMediaPlayer != null) {
+			synchronized (mMediaPlayer) {
 				mMediaPlayer.stop();
 				mMediaPlayer = null;
 			}
