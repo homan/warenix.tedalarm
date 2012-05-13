@@ -9,6 +9,7 @@ import org.dyndns.warenix.tedalarm.TedAlarm;
 import org.dyndns.warenix.tedalarm.provider.TedAlarmMeta;
 import org.dyndns.warenix.util.WLog;
 
+import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
 import android.media.AudioManager;
@@ -20,6 +21,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -67,6 +70,8 @@ public class AlarmRingFragment extends SherlockFragment implements
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		unlockScreen();
 
 		Bundle args = getArguments();
 		readInputBundle(args);
@@ -163,16 +168,20 @@ public class AlarmRingFragment extends SherlockFragment implements
 	public void onClick(View view) {
 		switch (view.getId()) {
 		case R.id.stop:
+			WLog.d(TAG, String.format("user clicked stop alarm"));
 			onStopClicked();
 			break;
 		}
 	}
 
 	void onStopClicked() {
+		WLog.d(TAG, String.format("stop ringing"));
 		if (mMediaPlayer != null) {
 			mMediaPlayer.stop();
 			mMediaPlayer = null;
 		}
+
+		removeUnlockScreen();
 
 		if (mListener != null) {
 			mListener.onStopAlarm(AlarmRingListener.STOP_REASON_USER_STOP);
@@ -191,6 +200,7 @@ public class AlarmRingFragment extends SherlockFragment implements
 				mMediaPlayer.setLooping(true);
 				mMediaPlayer.prepare();
 				mMediaPlayer.start();
+				WLog.d(TAG, String.format("start ringing now"));
 			}
 		} catch (IOException e) {
 			System.out.println("OOPS");
@@ -212,8 +222,19 @@ public class AlarmRingFragment extends SherlockFragment implements
 		return alert;
 	}
 
-	public void onDetach() {
+	public void onAttach(Activity activity) {
+		WLog.d(TAG, String.format("onAttach"));
+		super.onAttach(activity);
+	}
+
+	public void onDestroyView() {
+		WLog.i(TAG, String.format("exiting, stop alarm if needed"));
 		onStopClicked();
+		super.onDestroyView();
+	}
+
+	public void onDetach() {
+		WLog.d(TAG, String.format("onDetach"));
 		super.onDetach();
 	}
 
@@ -225,6 +246,24 @@ public class AlarmRingFragment extends SherlockFragment implements
 		 * when user stop the alarm
 		 */
 		public void onStopAlarm(int reasonCode);
+	}
+
+	private void unlockScreen() {
+		WLog.d(TAG, String.format("unlock screen"));
+		final Window win = getActivity().getWindow();
+		win.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+				| WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
+		win.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+				| WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+	}
+
+	private void removeUnlockScreen() {
+		WLog.d(TAG, String.format("remove unlock screen flags"));
+		final Window win = getActivity().getWindow();
+		win.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+				| WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
+		win.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+				| WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
 	}
 
 }

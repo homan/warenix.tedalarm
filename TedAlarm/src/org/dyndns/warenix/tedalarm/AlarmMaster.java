@@ -19,7 +19,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 
-
 public class AlarmMaster {
 	static final String TAG = "AlarmMaster";
 
@@ -437,6 +436,8 @@ public class AlarmMaster {
 					alarm.id);
 			for (String calendarId : calendarIdList) {
 				if (haveAllDayEvent(context, calendarId)) {
+					WLog.d(TAG, String.format(
+							"found an event in calender [%s]", calendarId));
 					return true;
 				}
 			}

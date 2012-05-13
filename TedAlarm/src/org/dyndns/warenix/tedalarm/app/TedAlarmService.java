@@ -34,16 +34,23 @@ public class TedAlarmService extends IntentService {
 			long alarmId = AlarmMaster.parseAlarmIdFromInsertUri(alarmUri);
 			TedAlarm alarm = AlarmMaster.restoryAlarmById(
 					getApplicationContext(), alarmId);
-			if (!AlarmMaster.isTodayHoliday(getApplicationContext(), alarm)) {
-				WLog.d(TAG, String.format("start alarm ring [%d]", alarmId));
-				AlarmMaster.actionStartAlarmRing(getApplicationContext(),
-						alarmUri);
+			if (alarm == null) {
+				WLog.d(TAG, String.format("cannot restore alarm [%d]", alarmId));
 			} else {
-				WLog.d(TAG, String.format(
-						"skip alarm [%d] because today is a holiday", alarmId));
-			}
+				if (!AlarmMaster.isTodayHoliday(getApplicationContext(), alarm)) {
+					WLog.d(TAG, String.format("start alarm ring [%d]", alarmId));
+					AlarmMaster.actionStartAlarmRing(getApplicationContext(),
+							alarmUri);
+				} else {
+					WLog.d(TAG, String.format(
+							"skip alarm [%d] because today is a holiday",
+							alarmId));
+				}
 
-			updateAlarmIfOneShot(this.getBaseContext(), alarm);
+				updateAlarmIfOneShot(this.getBaseContext(), alarm);
+			}
+		} else {
+			WLog.d(TAG, String.format("no alarm?"));
 		}
 	}
 

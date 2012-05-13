@@ -133,6 +133,7 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 		// alarm.id = 14;
 		// alarmUri = AlarmMaster.convertAlarmToUri(alarm);
 		if (alarmUri != null) {
+			WLog.i(TAG, String.format("show alarm ring fragment"));
 			List<?> segments = alarmUri.getPathSegments();
 			String id = (String) segments.get(0);
 			Bundle args = AlarmRingFragment.prepareAlarmRingBundle(Long
