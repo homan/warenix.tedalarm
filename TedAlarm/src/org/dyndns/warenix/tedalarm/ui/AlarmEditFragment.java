@@ -312,6 +312,8 @@ public class AlarmEditFragment extends SherlockFragment implements
 	 * want to save current alarm
 	 */
 	protected void onSave() {
+		mStartTime.clearFocus();
+
 		if (mAlarmEditListener != null) {
 			TedAlarm alarm = createAlarmFromView();
 			mAlarmEditListener.onSave(mInputParam.actionType, alarm);
