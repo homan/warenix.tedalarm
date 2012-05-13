@@ -53,6 +53,10 @@ public class AlarmRingFragment extends SherlockFragment implements
 	TedAlarm mAlarm;
 	AlarmRingListener mListener;
 
+	static final long sAdjustVolumeTimeMS = 2000;
+	static final float sAlarmVolume[] = { 01.f, 0.15f, 0.2f, 0.6f, 0.8f, 1.0f };
+	Thread mAlarmVolumeAdjsuter;
+
 	private static class InputParam {
 		long alarmId;
 	}
@@ -175,10 +179,17 @@ public class AlarmRingFragment extends SherlockFragment implements
 	}
 
 	void onStopClicked() {
-		WLog.d(TAG, String.format("stop ringing"));
-		if (mMediaPlayer != null) {
-			mMediaPlayer.stop();
-			mMediaPlayer = null;
+		if (mAlarmVolumeAdjsuter != null) {
+			mAlarmVolumeAdjsuter.interrupt();
+			mAlarmVolumeAdjsuter = null;
+		}
+
+		synchronized (mMediaPlayer) {
+			WLog.d(TAG, String.format("stop ringing"));
+			if (mMediaPlayer != null) {
+				mMediaPlayer.stop();
+				mMediaPlayer = null;
+			}
 		}
 
 		removeUnlockScreen();
@@ -201,6 +212,33 @@ public class AlarmRingFragment extends SherlockFragment implements
 				mMediaPlayer.prepare();
 				mMediaPlayer.start();
 				WLog.d(TAG, String.format("start ringing now"));
+
+				if (mAlarmVolumeAdjsuter == null) {
+					mAlarmVolumeAdjsuter = new Thread() {
+						public void run() {
+							int count = 0;
+							float volume;
+							while (count < sAlarmVolume.length) {
+								try {
+									Thread.sleep(sAdjustVolumeTimeMS);
+									volume = sAlarmVolume[count++];
+									synchronized (mMediaPlayer) {
+										if (mMediaPlayer == null) {
+											mMediaPlayer.setVolume(volume,
+													volume);
+										} else {
+											break;
+										}
+									}
+								} catch (InterruptedException e) {
+									break;
+								}
+
+							}
+						}
+					};
+					mAlarmVolumeAdjsuter.start();
+				}
 			}
 		} catch (IOException e) {
 			System.out.println("OOPS");
