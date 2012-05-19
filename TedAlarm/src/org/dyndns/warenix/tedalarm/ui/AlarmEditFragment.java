@@ -1,7 +1,6 @@
 package org.dyndns.warenix.tedalarm.ui;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 
 import org.dyndns.warenix.com.google.calendar.CalendarList;
