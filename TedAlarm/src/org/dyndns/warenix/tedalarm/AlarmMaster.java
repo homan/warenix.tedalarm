@@ -236,7 +236,7 @@ public class AlarmMaster {
 				createAlarmPendingIntent(context, alarm),
 				PendingIntent.FLAG_CANCEL_CURRENT);
 		long triggerAtTime = convertAlarmTime(alarm.startTime);
-		am.setRepeating(1, triggerAtTime, alarm.repeatMask, operation);
+		am.setRepeating(1, triggerAtTime, AlarmManager.INTERVAL_DAY, operation);
 		WLog.d(TAG, String.format(
 				"set repeat alarm, next fire at [%s] interval[%d]", new Date(
 						triggerAtTime).toLocaleString(), alarm.repeatMask));
@@ -309,6 +309,10 @@ public class AlarmMaster {
 
 	public static TedAlarm restoryAlarmById(Context context, long id) {
 		Uri empsUri = Uri.parse(String.format("content://tedalarm/%d", id));
+		return restoryAlarmByUri(context, empsUri);
+	}
+
+	public static TedAlarm restoryAlarmByUri(Context context, Uri empsUri) {
 		Cursor cursor = null;
 		cursor = context.getContentResolver().query(empsUri, null, null, null,
 				null);
@@ -444,6 +448,25 @@ public class AlarmMaster {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * check if the alarm is scheduled to ring today by looking at the repeat
+	 * mask.
+	 * 
+	 * @param alarm
+	 * @return
+	 */
+	public static boolean isAlarmRingOnToday(TedAlarm alarm) {
+		long repeatMask = alarm.repeatMask;
+		if (repeatMask != 0L) {
+			Calendar calendar = Calendar.getInstance();
+			int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+			int dayFlag = 1 << dayOfWeek;
+			return (dayFlag & repeatMask) != 0;
+		}
+		// not a regular alarm
+		return false;
 	}
 
 }

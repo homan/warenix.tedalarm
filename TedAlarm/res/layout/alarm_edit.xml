@@ -53,42 +53,49 @@
                 android:orientation="vertical" >
 
                 <CheckBox
-                    android:id="@+id/repeat"
+                    android:id="@+id/repeat_mon"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Mon" />
 
                 <CheckBox
-                    android:id="@+id/repeat"
+                    android:id="@+id/repeat_tue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Tue" />
 
                 <CheckBox
-                    android:id="@+id/repeat"
+                    android:id="@+id/repeat_wed"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Wed" />
 
                 <CheckBox
-                    android:id="@+id/repeat"
+                    android:id="@+id/repeat_thu"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Thu" />
 
                 <CheckBox
-                    android:id="@+id/repeat"
+                    android:id="@+id/repeat_fri"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Fri" />
+
+                <CheckBox
+                    android:id="@+id/repeat_sat"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Sat" />
 
                 <CheckBox
-                    android:id="@+id/repeat"
+                    android:id="@+id/repeat_sun"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"

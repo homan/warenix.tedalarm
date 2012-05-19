@@ -1,6 +1,7 @@
 package org.dyndns.warenix.tedalarm.ui;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 
 import org.dyndns.warenix.com.google.calendar.CalendarList;
@@ -225,6 +226,8 @@ public class AlarmEditFragment extends SherlockFragment implements
 	 */
 	void bindForActionNewAlarm() {
 		bindStartTimeView(System.currentTimeMillis());
+		mWeekDay.setVisibility(View.GONE);
+		bindHoliday(buildCheckedCalendarList());
 	}
 
 	/**
@@ -255,11 +258,13 @@ public class AlarmEditFragment extends SherlockFragment implements
 							.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_SCHEDULED)) != 0L;
 			mScheduled.setChecked(scheduled);
 
-			boolean repeatMask = cursor
+			long repeatMask = cursor
 					.getLong(cursor
-							.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_REPEAT_MASK)) != 0L;
-			mRepeat.setChecked(repeatMask);
-			mWeekDay.setVisibility(repeatMask ? View.VISIBLE : View.GONE);
+							.getColumnIndex(TedAlarmMeta.TableAlarmColumns.COL_REPEAT_MASK));
+			mRepeat.setChecked(repeatMask != 0L);
+			bindRepeatMask(repeatMask);
+
+			mWeekDay.setVisibility(repeatMask != 0L ? View.VISIBLE : View.GONE);
 			cursor.close();
 
 			buildCalenderCheckedFromDb();
@@ -303,7 +308,7 @@ public class AlarmEditFragment extends SherlockFragment implements
 		alarm.description = mDescription.getText().toString().trim();
 		alarm.scheduled = mScheduled.isChecked() ? 1L : 0L;
 		// FIXME: hardcoded repeat interval to be 5 sec
-		alarm.repeatMask = mRepeat.isChecked() ? 5L * 1000 : 0L;
+		alarm.repeatMask = mRepeat.isChecked() ? calculateRepeatMask() : 0L;
 		alarm.holidayList = buildCheckedCalendarList();
 		return alarm;
 	}
@@ -413,6 +418,10 @@ public class AlarmEditFragment extends SherlockFragment implements
 				allCalendarName += "\"" + calendar.summary + "\" ";
 			}
 			mHoliday.setText(String.format("Holiday +%s", allCalendarName));
+		} else {
+			mHoliday.setEnabled(false);
+			mHoliday.setText(String
+					.format("Holiday (Please sync Google calendar first)"));
 		}
 	}
 
@@ -434,4 +443,41 @@ public class AlarmEditFragment extends SherlockFragment implements
 		return null;
 	}
 
+	int[] mButtonIdList = { R.id.repeat_sun, R.id.repeat_mon, R.id.repeat_tue,
+			R.id.repeat_wed, R.id.repeat_thu, R.id.repeat_fri, R.id.repeat_sat, };
+
+	/**
+	 * from the list of days, calculate a repeat mask
+	 * 
+	 * @return
+	 */
+	long calculateRepeatMask() {
+		long repeatMask = 0L;
+		int id;
+		for (int i = 0; i < mButtonIdList.length; ++i) {
+			id = mButtonIdList[i];
+			if (((CheckBox) getView().findViewById(id)).isChecked()) {
+				repeatMask |= 1 << (i + 1);
+			}
+		}
+		WLog.d(TAG, String.format("calculated repeat mask[%d]", repeatMask));
+		return repeatMask;
+	}
+
+	/**
+	 * given a repeat mask, bing the value to the list of days
+	 * 
+	 * @param repeatMask
+	 */
+	void bindRepeatMask(long repeatMask) {
+		int id;
+		int dayFlag;
+		for (int i = 0; i < mButtonIdList.length; ++i) {
+			dayFlag = 1 << (i + 1);
+			if ((dayFlag & repeatMask) != 0) {
+				id = mButtonIdList[i];
+				((CheckBox) getView().findViewById(id)).setChecked(true);
+			}
+		}
+	}
 }

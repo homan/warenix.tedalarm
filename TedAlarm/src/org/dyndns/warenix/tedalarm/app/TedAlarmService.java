@@ -31,20 +31,26 @@ public class TedAlarmService extends IntentService {
 	protected void onHandleIntent(Intent intent) {
 		Uri alarmUri = intent.getData();
 		if (alarmUri != null) {
-			long alarmId = AlarmMaster.parseAlarmIdFromInsertUri(alarmUri);
-			TedAlarm alarm = AlarmMaster.restoryAlarmById(
-					getApplicationContext(), alarmId);
+			TedAlarm alarm = AlarmMaster.restoryAlarmByUri(
+					getApplicationContext(), alarmUri);
 			if (alarm == null) {
-				WLog.d(TAG, String.format("cannot restore alarm [%d]", alarmId));
+				WLog.d(TAG, String.format("cannot restore alarm url [%s]",
+						alarmUri));
 			} else {
-				if (!AlarmMaster.isTodayHoliday(getApplicationContext(), alarm)) {
-					WLog.d(TAG, String.format("start alarm ring [%d]", alarmId));
+				boolean ruleSingleShotAlarm = alarm.repeatMask == 0L;
+				boolean ruleRepeatAlarmOnToday = AlarmMaster
+						.isAlarmRingOnToday(alarm);
+				boolean ruleRingOnNonHoliday = !AlarmMaster.isTodayHoliday(
+						getApplicationContext(), alarm);
+
+				if (ruleSingleShotAlarm
+						|| (ruleRepeatAlarmOnToday && ruleRingOnNonHoliday)) {
+					WLog.d(TAG,
+							String.format("start alarm ring [%s]", alarmUri));
 					AlarmMaster.actionStartAlarmRing(getApplicationContext(),
 							alarmUri);
 				} else {
-					WLog.d(TAG, String.format(
-							"skip alarm [%d] because today is a holiday",
-							alarmId));
+					WLog.d(TAG, String.format("skip alarm [%s]", alarmUri));
 				}
 
 				updateAlarmIfOneShot(this.getBaseContext(), alarm);
