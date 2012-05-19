@@ -50,11 +50,14 @@ public class AlarmRingFragment extends SherlockFragment implements
 
 	MediaPlayer mMediaPlayer;
 
+	Object mVolumeLock = new Object();
+
 	TedAlarm mAlarm;
 	AlarmRingListener mListener;
 
 	static final long sAdjustVolumeTimeMS = 2000;
-	static final float sAlarmVolume[] = { 01.f, 0.15f, 0.2f, 0.6f, 0.8f, 1.0f };
+	static final float sAlarmVolume[] = { 0.05f, 0.1f, 0.15f, 0.2f, 0.6f, 0.8f,
+			1.0f };
 	Thread mAlarmVolumeAdjsuter;
 
 	private static class InputParam {
@@ -186,7 +189,7 @@ public class AlarmRingFragment extends SherlockFragment implements
 
 		WLog.d(TAG, String.format("stop ringing"));
 		if (mMediaPlayer != null) {
-			synchronized (mMediaPlayer) {
+			synchronized (mVolumeLock) {
 				mMediaPlayer.stop();
 				mMediaPlayer = null;
 			}
@@ -206,8 +209,9 @@ public class AlarmRingFragment extends SherlockFragment implements
 			final AudioManager audioManager = (AudioManager) context
 					.getSystemService(Context.AUDIO_SERVICE);
 			if (audioManager.getStreamVolume(AudioManager.STREAM_ALARM) != 0) {
+				float volume = sAlarmVolume[0];
 				mMediaPlayer.setAudioStreamType(AudioManager.STREAM_ALARM);
-				mMediaPlayer.setVolume(0.1f, 0.1f);
+				mMediaPlayer.setVolume(volume, volume);
 				mMediaPlayer.setLooping(true);
 				mMediaPlayer.prepare();
 				mMediaPlayer.start();
@@ -222,22 +226,29 @@ public class AlarmRingFragment extends SherlockFragment implements
 								try {
 									Thread.sleep(sAdjustVolumeTimeMS);
 									volume = sAlarmVolume[count++];
-									synchronized (mMediaPlayer) {
-										if (mMediaPlayer == null) {
+									synchronized (mVolumeLock) {
+										if (mMediaPlayer != null) {
 											mMediaPlayer.setVolume(volume,
 													volume);
+											WLog.d(TAG, String.format(
+													"adjust volume to [%f]",
+													volume));
 										} else {
 											break;
 										}
 									}
 								} catch (InterruptedException e) {
+									e.printStackTrace();
 									break;
 								}
 
 							}
+							WLog.i(TAG,
+									String.format("stop adjust alarm volume"));
 						}
 					};
 					mAlarmVolumeAdjsuter.start();
+					WLog.i(TAG, String.format("start adjust alarm volume"));
 				}
 			}
 		} catch (IOException e) {
