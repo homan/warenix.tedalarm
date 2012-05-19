@@ -127,20 +127,24 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 	}
 
 	private void determineAlarmRing(Intent intent) {
-		Uri alarmUri = intent.getData();
-		// // test data
-		// TedAlarm alarm = new TedAlarm();
-		// alarm.id = 14;
-		// alarmUri = AlarmMaster.convertAlarmToUri(alarm);
-		if (alarmUri != null) {
-			WLog.i(TAG, String.format("show alarm ring fragment"));
-			List<?> segments = alarmUri.getPathSegments();
-			String id = (String) segments.get(0);
-			Bundle args = AlarmRingFragment.prepareAlarmRingBundle(Long
-					.parseLong(id));
-			AlarmRingFragment alarmRingFragment = AlarmRingFragment
-					.newInstance(this, args);
-			showFragment(alarmRingFragment, true);
+		boolean comeFromHistory = (Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY & intent
+				.getFlags()) != 0;
+		if (!comeFromHistory) {
+			Uri alarmUri = intent.getData();
+			// // test data
+			// TedAlarm alarm = new TedAlarm();
+			// alarm.id = 14;
+			// alarmUri = AlarmMaster.convertAlarmToUri(alarm);
+			if (alarmUri != null) {
+				WLog.i(TAG, String.format("show alarm ring fragment"));
+				List<?> segments = alarmUri.getPathSegments();
+				String id = (String) segments.get(0);
+				Bundle args = AlarmRingFragment.prepareAlarmRingBundle(Long
+						.parseLong(id));
+				AlarmRingFragment alarmRingFragment = AlarmRingFragment
+						.newInstance(this, args);
+				showFragment(alarmRingFragment, true);
+			}
 		}
 	}
 
