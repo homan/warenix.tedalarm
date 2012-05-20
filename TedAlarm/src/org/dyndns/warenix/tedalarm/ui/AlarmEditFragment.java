@@ -267,7 +267,6 @@ public class AlarmEditFragment extends SherlockFragment implements
 			cursor.close();
 
 			buildCalenderCheckedFromDb();
-			buildCheckedCalendarList();
 			bindHoliday(buildCheckedCalendarList());
 		}
 	}
@@ -421,7 +420,9 @@ public class AlarmEditFragment extends SherlockFragment implements
 			}
 			mHoliday.setText(String.format("Holiday +%s", allCalendarName));
 		} else {
-			mHoliday.setEnabled(false);
+			boolean hasCalenderList = sCalendarList != null
+					&& sCalendarList.size() > 0;
+			mHoliday.setEnabled(hasCalenderList);
 			mHoliday.setText(String
 					.format("Holiday (Please sync Google calendar first)"));
 		}
