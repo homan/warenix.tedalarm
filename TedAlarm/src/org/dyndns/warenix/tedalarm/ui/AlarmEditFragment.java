@@ -336,6 +336,9 @@ public class AlarmEditFragment extends SherlockFragment implements
 
 	@Override
 	public void onCancel() {
+		if (mAlarmEditListener != null) {
+			mAlarmEditListener.onCancel();
+		}
 	}
 
 	/**

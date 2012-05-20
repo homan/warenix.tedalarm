@@ -25,11 +25,13 @@ import com.actionbarsherlock.view.MenuItem;
 import com.google.api.GoogleAppInfo;
 import com.google.api.GoogleOAuthAccessToken;
 import com.google.api.GoogleOAuthActivity;
+import com.google.api.GoogleOAuthListener;
 
 /**
  * A fragment that sync google calendar list and events to database
  */
-public class SyncFragment extends SherlockFragment {
+public class SyncFragment extends SherlockFragment implements
+		GoogleOAuthListener {
 	private static final String TAG = "SyncFragment";
 
 	ProgressFragment mProgressFragment;
@@ -123,7 +125,7 @@ public class SyncFragment extends SherlockFragment {
 						"updated calender list item to new uri[%s]", newAlarm));
 
 				ArrayList<EventListItem> eventList = GoogleCalendarMaster
-						.getFutureEvent(mAccessToken, calendarListItem.id);
+						.getFutureEvent(mAccessToken, calendarListItem.id, 7);
 				if (eventList != null) {
 					WLog.d(TAG, String.format("calender [%s] has [%d] events",
 							calendarListItem.summary, eventList.size()));
@@ -195,7 +197,7 @@ public class SyncFragment extends SherlockFragment {
 
 		@Override
 		protected void onPostExecute(Void v) {
-			if (mProgressFragment != null && mProgressFragment.isVisible()) {
+			if (mProgressFragment != null) {
 				mProgressFragment.dismiss();
 				mProgressFragment = null;
 			}
@@ -219,5 +221,22 @@ public class SyncFragment extends SherlockFragment {
 			dialog.setCancelable(true);
 			return dialog;
 		}
+	}
+
+	@Override
+	public void onOAuthSuccess(String code) {
+		WLog.i(TAG, "oauth success");
+
+	}
+
+	@Override
+	public void onOAuthFail(String errorCode) {
+		WLog.i(TAG, "oauth fail");
+	}
+
+	@Override
+	public void onOAuthAccessTokenExchanged(GoogleOAuthAccessToken accessToken) {
+		WLog.i(TAG, "oauth exchanged");
+		new SyncGoogleCalendarAsyncTask().execute();
 	}
 }

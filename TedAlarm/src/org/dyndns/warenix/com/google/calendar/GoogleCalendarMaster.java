@@ -39,7 +39,7 @@ public class GoogleCalendarMaster {
 	}
 
 	public static ArrayList<EventListItem> getFutureEvent(
-			GoogleOAuthAccessToken accessToken, String calendarId) {
+			GoogleOAuthAccessToken accessToken, String calendarId, int day) {
 		// RFC 3339 timestamp format
 		SimpleDateFormat format = new SimpleDateFormat(
 				"yyyy-MM-dd'T'hh:m:ss'Z'");
@@ -47,7 +47,7 @@ public class GoogleCalendarMaster {
 		String timeMin = format.format(new Date());
 
 		Calendar c = Calendar.getInstance();
-		c.add(Calendar.DATE, 1); // number of days to add
+		c.add(Calendar.DATE, day); // number of days to add
 		Date maxDate = new Date(c.getTimeInMillis());
 		String timeMax = format.format(maxDate);
 
