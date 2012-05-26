@@ -156,13 +156,13 @@ public class AlarmEditFragment extends SherlockFragment implements
 		// AlarmMaster.actionStartAlarmRing(getActivity(), null);
 		// return true;
 		case R.id.menu_save:
-			onSave();
+			onSaveAlarm();
 			return true;
 		case R.id.menu_delete:
-			onDelete();
+			onDeleteAlarm();
 			return true;
 		case R.id.menu_cancel:
-			onCancel();
+			onCancelAlarm();
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
@@ -317,7 +317,7 @@ public class AlarmEditFragment extends SherlockFragment implements
 	/**
 	 * want to save current alarm
 	 */
-	protected void onSave() {
+	protected void onSaveAlarm() {
 		mStartTime.clearFocus();
 
 		if (mAlarmEditListener != null) {
@@ -329,15 +329,17 @@ public class AlarmEditFragment extends SherlockFragment implements
 	/**
 	 * want to delete current alarm
 	 */
-	protected void onDelete() {
+	protected void onDeleteAlarm() {
 		if (mAlarmEditListener != null) {
 			TedAlarm alarm = createAlarmFromView();
 			mAlarmEditListener.onDelete(alarm);
 		}
 	}
 
-	@Override
-	public void onCancel() {
+	/**
+	 * want to cancel create a new alarm
+	 */
+	protected void onCancelAlarm() {
 		if (mAlarmEditListener != null) {
 			mAlarmEditListener.onCancel();
 		}
@@ -390,6 +392,10 @@ public class AlarmEditFragment extends SherlockFragment implements
 
 		bindHoliday(buildCheckedCalendarList());
 
+	}
+
+	@Override
+	public void onCancel() {
 	}
 
 	void buildCalenderCheckedFromDb() {
