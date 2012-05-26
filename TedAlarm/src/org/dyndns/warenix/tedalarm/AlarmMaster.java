@@ -416,9 +416,16 @@ public class AlarmMaster {
 		return alarmId;
 	}
 
-	public static boolean haveAllDayEvent(Context context, String calendarId) {
+	/**
+	 * checked is there any happening events right now.
+	 * 
+	 * @param context
+	 * @param calendarId
+	 * @return true if there is happening events right now.
+	 */
+	public static boolean hasHappeningEvent(Context context, String calendarId) {
 		Uri empsUri = Uri.parse("content://googlecalendar/have_all_day_event/"
-				+ "g28ov7hrvueikp331385v52mms@group.calendar.google.com");
+				+ calendarId);
 		Cursor cursor = context.getContentResolver().query(empsUri, null, null,
 				null, null);
 		if (cursor != null) {
@@ -439,7 +446,7 @@ public class AlarmMaster {
 			ArrayList<String> calendarIdList = getCalendarIdOfAlarm(context,
 					alarm.id);
 			for (String calendarId : calendarIdList) {
-				if (haveAllDayEvent(context, calendarId)) {
+				if (hasHappeningEvent(context, calendarId)) {
 					WLog.d(TAG, String.format(
 							"found an event in calender [%s]", calendarId));
 					return true;
