@@ -62,6 +62,9 @@ public class AlarmEditFragment extends SherlockFragment implements
 	View mWeekDay;
 	Button mHoliday;
 
+	/**
+	 * list of holiday calendar available for chosen
+	 */
 	static ArrayList<CalendarListItem> sCalendarList;
 	boolean[] mCalendarChecked;
 
@@ -226,7 +229,7 @@ public class AlarmEditFragment extends SherlockFragment implements
 	void bindForActionNewAlarm() {
 		bindStartTimeView(System.currentTimeMillis());
 		mWeekDay.setVisibility(View.GONE);
-		bindHoliday(buildCheckedCalendarList());
+		bindHoliday(null);
 	}
 
 	/**
@@ -423,8 +426,12 @@ public class AlarmEditFragment extends SherlockFragment implements
 			boolean hasCalenderList = sCalendarList != null
 					&& sCalendarList.size() > 0;
 			mHoliday.setEnabled(hasCalenderList);
-			mHoliday.setText(String
-					.format("Holiday (Please sync Google calendar first)"));
+			if (hasCalenderList) {
+				mHoliday.setText(String.format("Holiday"));
+			} else {
+				mHoliday.setText(String
+						.format("Holiday (Please sync Google calendar first)"));
+			}
 		}
 	}
 
