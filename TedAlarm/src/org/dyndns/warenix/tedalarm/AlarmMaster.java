@@ -84,8 +84,12 @@ public class AlarmMaster {
 		AlarmMaster.cancelAlarm(context, alarm);
 		if (alarm.scheduled == 1) {
 			if (alarm.repeatMask == 0) {
+				WLog.d(TAG,
+						String.format("schedule one shot:%s", alarm.toString()));
 				AlarmMaster.scheduleAlarmOneShot(context, alarm);
 			} else {
+				WLog.d(TAG, String.format("schedule repeating:%s",
+						alarm.toString()));
 				AlarmMaster.scheduleAlarmRepeat(context, alarm);
 			}
 		}
@@ -283,6 +287,12 @@ public class AlarmMaster {
 		return null;
 	}
 
+	/**
+	 * store chosen holiday calendars of an alarm
+	 * 
+	 * @param context
+	 * @param alarm
+	 */
 	public static void addAllAlarmHoliday(Context context, TedAlarm alarm) {
 		if (alarm.holidayList != null) {
 			Uri empsUri = Uri.parse("content://tedalarm/holidays/" + alarm.id);
@@ -298,6 +308,12 @@ public class AlarmMaster {
 		}
 	}
 
+	/**
+	 * remove stored hoiday calendars of an alarm
+	 * 
+	 * @param context
+	 * @param alarm
+	 */
 	public static void removeAllAlarmHoliday(Context context, TedAlarm alarm) {
 		if (alarm.holidayList != null) {
 			Uri empsUri = Uri.parse("content://tedalarm/holidays/" + alarm.id);
@@ -307,11 +323,25 @@ public class AlarmMaster {
 		}
 	}
 
+	/**
+	 * restore alarm by id in uri
+	 * 
+	 * @param context
+	 * @param id
+	 * @return
+	 */
 	public static TedAlarm restoryAlarmById(Context context, long id) {
 		Uri empsUri = Uri.parse(String.format("content://tedalarm/%d", id));
 		return restoryAlarmByUri(context, empsUri);
 	}
 
+	/**
+	 * restore alarm by uri
+	 * 
+	 * @param context
+	 * @param empsUri
+	 * @return
+	 */
 	public static TedAlarm restoryAlarmByUri(Context context, Uri empsUri) {
 		Cursor cursor = null;
 		cursor = context.getContentResolver().query(empsUri, null, null, null,
@@ -394,6 +424,12 @@ public class AlarmMaster {
 		return rowsAffected > 0;
 	}
 
+	/**
+	 * prepare for database insert/update from a given alarm
+	 * 
+	 * @param alarm
+	 * @return
+	 */
 	public static ContentValues prepareContentValuesFromAlarm(TedAlarm alarm) {
 		ContentValues cvs;
 

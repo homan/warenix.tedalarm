@@ -21,6 +21,12 @@ import com.google.api.GoogleOAuthAccessToken;
 public class GoogleCalendarMaster {
 	static final String TAG = "GoogleCalendarMaster";
 
+	/**
+	 * get a list of all my calendars
+	 * 
+	 * @param accessToken
+	 * @return
+	 */
 	public static ArrayList<CalendarListItem> getAllCalendar(
 			GoogleOAuthAccessToken accessToken) {
 		String url = String
@@ -38,6 +44,15 @@ public class GoogleCalendarMaster {
 		return null;
 	}
 
+	/**
+	 * get a list of future events from now to given days later in a particular
+	 * calendar
+	 * 
+	 * @param accessToken
+	 * @param calendarId
+	 * @param day
+	 * @return
+	 */
 	public static ArrayList<EventListItem> getFutureEvent(
 			GoogleOAuthAccessToken accessToken, String calendarId, int day) {
 		// RFC 3339 timestamp format
@@ -72,7 +87,7 @@ public class GoogleCalendarMaster {
 	 * get a list of calender
 	 * 
 	 * @param context
-	 * @return
+	 * @return null when there's no stored calendar
 	 */
 	public static ArrayList<CalendarListItem> getCalendarList(Context context) {
 		Uri empsUri = Uri.parse("content://googlecalendar/"
