@@ -12,6 +12,7 @@ import org.dyndns.warenix.tedalarm.ui.AlarmListFragment;
 import org.dyndns.warenix.tedalarm.ui.AlarmListFragment.AlarmListListener;
 import org.dyndns.warenix.tedalarm.ui.AlarmRingFragment;
 import org.dyndns.warenix.tedalarm.ui.AlarmRingFragment.AlarmRingListener;
+import org.dyndns.warenix.tedalarm.ui.DebugFragment;
 import org.dyndns.warenix.tedalarm.ui.SyncFragment;
 import org.dyndns.warenix.util.WLog;
 
@@ -91,6 +92,13 @@ public class TedAlarmActivity extends SherlockFragmentActivity implements
 		if (mFragment1 == null) {
 			mFragment1 = SyncFragment.newInstance();
 			ft.add(mFragment1, "f1");
+		}
+
+		// show debug menu
+		Fragment debugMenu = fm.findFragmentByTag("debug");
+		if (debugMenu == null) {
+			debugMenu = DebugFragment.newInstance();
+			ft.add(debugMenu, "debug");
 		}
 		ft.commit();
 		// testTedAlarmProvider();

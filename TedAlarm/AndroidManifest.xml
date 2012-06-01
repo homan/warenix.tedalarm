@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.dyndns.warenix.tedalarm"
+    android:installLocation="auto"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -8,6 +9,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:icon="@drawable/ic_launcher"
@@ -26,6 +28,11 @@
 
         <service android:name=".app.TedAlarmService" />
 
+        <receiver android:name=".BootReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
         <receiver android:name=".AlarmRingReceiver" />
 
         <provider

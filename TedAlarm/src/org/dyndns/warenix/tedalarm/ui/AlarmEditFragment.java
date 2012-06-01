@@ -275,7 +275,7 @@ public class AlarmEditFragment extends SherlockFragment implements
 	}
 
 	void bindStartTimeView(long startTimeMs) {
-		Date d = new Date(startTimeMs);
+		Date d = AlarmMaster.convertStartTimeToDate(startTimeMs);
 		mStartTime.setCurrentHour(d.getHours());
 		mStartTime.setCurrentMinute(d.getMinutes());
 	}

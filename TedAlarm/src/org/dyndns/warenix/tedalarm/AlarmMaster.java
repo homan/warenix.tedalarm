@@ -128,27 +128,28 @@ public class AlarmMaster {
 	 *         time of next day
 	 */
 	public static long convertAlarmTime(int hour, int minute) {
-		long triggerAtTime = 0;
-		Date currentDate = new Date();
-		Date alarmDate = (Date) currentDate.clone();
-		alarmDate.setHours(hour);
-		alarmDate.setMinutes(minute);
-		alarmDate.setSeconds(0);
-		if (alarmDate.before(currentDate)) {
-			// advance to next day
-			Calendar c = Calendar.getInstance();
-			c.setTime(alarmDate);
-
-			c.add(Calendar.DATE, 1); // number of days to add
-			triggerAtTime = c.getTimeInMillis();
-		} else {
-			triggerAtTime = alarmDate.getTime();
-		}
-		return triggerAtTime;
+		// long triggerAtTime = 0;
+		// Date currentDate = new Date();
+		// Date alarmDate = (Date) currentDate.clone();
+		// alarmDate.setHours(hour);
+		// alarmDate.setMinutes(minute);
+		// alarmDate.setSeconds(0);
+		// if (alarmDate.before(currentDate)) {
+		// // advance to next day
+		// Calendar c = Calendar.getInstance();
+		// c.setTime(alarmDate);
+		//
+		// c.add(Calendar.DATE, 1); // number of days to add
+		// triggerAtTime = c.getTimeInMillis();
+		// } else {
+		// triggerAtTime = alarmDate.getTime();
+		// }
+		// return triggerAtTime;
+		return hour * 100 + minute;
 	}
 
 	public static String formatAlarmTime(long startTime) {
-		Date d = new Date(startTime);
+		Date d = convertStartTimeToDate(startTime);
 		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
 		return sdf.format(d);
 	}
@@ -161,7 +162,10 @@ public class AlarmMaster {
 	public static long convertAlarmTime(long startTime) {
 		long triggerAtTime = 0;
 		Date currentDate = new Date();
-		Date alarmDate = new Date(startTime);
+		// Date alarmDate = new Date();
+		// alarmDate.setHours((int) startTime / 100);
+		// alarmDate.setMinutes((int) startTime % 100);
+		Date alarmDate = convertStartTimeToDate(startTime);
 		if (alarmDate.before(currentDate)) {
 			// advance to next day
 			Calendar c = Calendar.getInstance();
@@ -173,6 +177,14 @@ public class AlarmMaster {
 			triggerAtTime = alarmDate.getTime();
 		}
 		return triggerAtTime;
+	}
+
+	public static Date convertStartTimeToDate(long startTime) {
+		Date d = new Date();
+		d.setHours((int) startTime / 100);
+		d.setMinutes((int) startTime % 100);
+		d.setSeconds(0);
+		return d;
 	}
 
 	/**
