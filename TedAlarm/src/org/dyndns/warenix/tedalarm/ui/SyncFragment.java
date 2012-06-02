@@ -6,16 +6,27 @@ import org.dyndns.warenix.com.google.calendar.CalendarList.CalendarListItem;
 import org.dyndns.warenix.com.google.calendar.EventList.EventListItem;
 import org.dyndns.warenix.com.google.calendar.GoogleCalendarMaster;
 import org.dyndns.warenix.google.calendar.provider.GoogleCalendarMeta;
+import org.dyndns.warenix.tedalarm.AlarmMaster;
 import org.dyndns.warenix.tedalarm.R;
+import org.dyndns.warenix.tedalarm.app.TedAlarmActivity;
 import org.dyndns.warenix.util.WLog;
 
 import android.app.Dialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.os.Messenger;
 
 import com.actionbarsherlock.app.SherlockDialogFragment;
 import com.actionbarsherlock.app.SherlockFragment;
@@ -24,17 +35,43 @@ import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import com.google.api.GoogleAppInfo;
 import com.google.api.GoogleOAuthAccessToken;
-import com.google.api.GoogleOAuthActivity;
-import com.google.api.GoogleOAuthListener;
+import com.google.api.ui.GoogleOAuthIntentService;
 
 /**
  * A fragment that sync google calendar list and events to database
  */
-public class SyncFragment extends SherlockFragment implements
-		GoogleOAuthListener {
+public class SyncFragment extends SherlockFragment {
 	private static final String TAG = "SyncFragment";
 
+	private static final int SYNC_CALENDAR_NOTIFICATION_ID = 1;
+
 	ProgressFragment mProgressFragment;
+
+	boolean mSyncGoogleCalenderDone = true;
+
+	protected static Object sSyncLock = new Object();
+
+	private BroadcastReceiver mOAuthReceiver = new BroadcastReceiver() {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			String action = intent.getAction();
+			WLog.d(TAG, String.format("received action[%s]", action));
+			onSync(context, true);
+		}
+	};
+
+	private Handler mOAuthHandler = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			Bundle data = msg.getData();
+			boolean result = data.getBoolean("result");
+			String action = data.getString("action");
+			if (result) {
+				new SyncGoogleCalendarAsyncTask(getActivity()).execute();
+			}
+		}
+	};
 
 	public static SyncFragment newInstance() {
 		SyncFragment f = new SyncFragment();
@@ -45,6 +82,23 @@ public class SyncFragment extends SherlockFragment implements
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setHasOptionsMenu(true);
+		AlarmMaster.cancelSyncCalender(getActivity());
+		AlarmMaster.scheduleSyncCalendar(getActivity());
+	}
+
+	@Override
+	public void onResume() {
+		super.onResume();
+
+		if (mProgressFragment != null && mSyncGoogleCalenderDone) {
+			mProgressFragment.dismiss();
+			mProgressFragment = null;
+		}
+	}
+
+	@Override
+	public void onPause() {
+		super.onPause();
 	}
 
 	@Override
@@ -54,32 +108,94 @@ public class SyncFragment extends SherlockFragment implements
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
+		Context context = getActivity().getApplicationContext();
+
 		int id = item.getItemId();
 		switch (id) {
 		case R.id.menu_sync:
-			onSync();
+			onSync(context, false);
 		}
 		return super.onOptionsItemSelected(item);
 	}
 
 	GoogleOAuthAccessToken mAccessToken;
+	Messenger mMessenger = new Messenger(mOAuthHandler);
 
-	void onSync() {
-		Context context = getActivity().getApplicationContext();
+	public void onSync(Context context, boolean doInBackground) {
+		if (canSync(context, doInBackground)) {
+			if (doInBackground) {
+				showNotification(context, SYNC_CALENDAR_NOTIFICATION_ID,
+						"Synchronizing Google Calendar Events", "TedAlarm",
+						"Synchronizing Google Calendar Events");
+				syncGoogleCalendar(context);
+				cancelNotification(context, SYNC_CALENDAR_NOTIFICATION_ID);
+			} else {
+				new SyncGoogleCalendarAsyncTask(context).execute();
+			}
+		}
+	}
+
+	private boolean canSync(Context context, boolean doInBackground) {
+		WLog.i(TAG, "checking can sync");
 		mAccessToken = GoogleOAuthAccessToken.load(context);
-		final GoogleAppInfo appInfo = new GoogleAppInfo(context);
-
 		if (mAccessToken.accessToken == null) {
 			WLog.i(TAG, String.format("no google oauth token found"));
-			GoogleOAuthActivity.startOauthActivity(context, appInfo, false,
-					null);
+
+			Intent intent = GoogleOAuthIntentService.prepareActionOAuthIntent(
+					mMessenger, doInBackground);
+			context.startService(intent);
+
+			registerOAuthReceiver(context);
 		} else if (mAccessToken.hasExpired()) {
 			WLog.i(TAG, String.format("google oauth token has expired"));
-			GoogleOAuthActivity
-					.startOauthActivity(context, appInfo, true, null);
+
+			Intent intent = GoogleOAuthIntentService
+					.prepareActionRefreshTokenIntent(mMessenger,
+							new GoogleAppInfo(context));
+			context.startService(intent);
+			registerOAuthReceiver(context);
 		} else {
-			new SyncGoogleCalendarAsyncTask().execute();
+			return true;
 		}
+		return false;
+
+	}
+
+	private void registerOAuthReceiver(Context context) {
+		IntentFilter intentFilter = new IntentFilter(
+				GoogleOAuthIntentService.IntentAction.ACTION_OAUTH_DONE);
+		context.registerReceiver(mOAuthReceiver, intentFilter);
+	}
+
+	private void showNotification(Context context, int id,
+			CharSequence tickerText, CharSequence contentTitle,
+			CharSequence contentText) {
+		String ns = Context.NOTIFICATION_SERVICE;
+		NotificationManager mNotificationManager = (NotificationManager) context
+				.getSystemService(ns);
+
+		int icon = R.drawable.ic_launcher;
+		long when = System.currentTimeMillis();
+
+		Notification notification = new Notification(icon, tickerText, when);
+
+		Intent notificationIntent = new Intent(context, TedAlarmActivity.class);
+		PendingIntent contentIntent = PendingIntent.getActivity(context, 0,
+				notificationIntent, 0);
+
+		notification.setLatestEventInfo(context, contentTitle, contentText,
+				contentIntent);
+
+		// show
+		mNotificationManager.notify(id, notification);
+	}
+
+	private void cancelNotification(Context context, int id) {
+		String ns = Context.NOTIFICATION_SERVICE;
+		NotificationManager mNotificationManager = (NotificationManager) context
+				.getSystemService(ns);
+		// show
+		mNotificationManager.cancel(id);
 	}
 
 	/**
@@ -87,7 +203,7 @@ public class SyncFragment extends SherlockFragment implements
 	 * 
 	 * @param context
 	 */
-	void syncGoogleCalendar(Context context) {
+	private void syncGoogleCalendar(Context context) {
 		ArrayList<CalendarListItem> calendarList = GoogleCalendarMaster
 				.getAllCalendar(mAccessToken);
 		if (calendarList == null) {
@@ -145,7 +261,6 @@ public class SyncFragment extends SherlockFragment implements
 				}
 			}
 		}
-
 	}
 
 	public ContentValues convertEventToContentValues(
@@ -181,25 +296,40 @@ public class SyncFragment extends SherlockFragment implements
 	 * 
 	 */
 	class SyncGoogleCalendarAsyncTask extends AsyncTask<Void, Void, Void> {
+		private Context mContext;
+
+		public SyncGoogleCalendarAsyncTask(Context context) {
+			mContext = context;
+		}
 
 		@Override
 		protected Void doInBackground(Void... params) {
-			syncGoogleCalendar(getActivity());
+			synchronized (sSyncLock) {
+				mSyncGoogleCalenderDone = false;
+				syncGoogleCalendar(mContext);
+				mSyncGoogleCalenderDone = true;
+			}
 			return null;
 		}
 
 		protected void onPreExecute() {
 			if (mProgressFragment == null) {
-				mProgressFragment = new ProgressFragment();
-				mProgressFragment.show(getFragmentManager(), "sync");
+				if (SyncFragment.this.isAdded()
+						&& SyncFragment.this.isResumed()) {
+					mProgressFragment = new ProgressFragment();
+					mProgressFragment.show(getFragmentManager(), "sync");
+				}
 			}
 		}
 
 		@Override
 		protected void onPostExecute(Void v) {
 			if (mProgressFragment != null) {
-				mProgressFragment.dismiss();
-				mProgressFragment = null;
+				if (SyncFragment.this.isAdded()
+						&& SyncFragment.this.isResumed()) {
+					mProgressFragment.dismiss();
+					mProgressFragment = null;
+				}
 			}
 		}
 	}
@@ -223,20 +353,21 @@ public class SyncFragment extends SherlockFragment implements
 		}
 	}
 
-	@Override
-	public void onOAuthSuccess(String code) {
-		WLog.i(TAG, "oauth success");
-
-	}
-
-	@Override
-	public void onOAuthFail(String errorCode) {
-		WLog.i(TAG, "oauth fail");
-	}
-
-	@Override
-	public void onOAuthAccessTokenExchanged(GoogleOAuthAccessToken accessToken) {
-		WLog.i(TAG, "oauth exchanged");
-		new SyncGoogleCalendarAsyncTask().execute();
-	}
+	// @Override
+	// public void onOAuthSuccess(String code) {
+	// WLog.i(TAG, "oauth success");
+	//
+	// }
+	//
+	// @Override
+	// public void onOAuthFail(String errorCode) {
+	// WLog.i(TAG, "oauth fail");
+	// }
+	//
+	// @Override
+	// public void onOAuthAccessTokenExchanged(GoogleOAuthAccessToken
+	// accessToken) {
+	// WLog.i(TAG, "oauth exchanged");
+	// new SyncGoogleCalendarAsyncTask(getActivity()).execute();
+	// }
 }

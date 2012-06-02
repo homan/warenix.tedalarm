@@ -120,12 +120,11 @@ public class AlarmMaster {
 	}
 
 	/**
-	 * calculate the next alarm trigger time from given start time.
+	 * encode hour:minute into a 4 digits number
 	 * 
 	 * @param hour
 	 * @param minute
-	 * @return If start time is before current time, it will return the start
-	 *         time of next day
+	 * @return a number representing alarm time
 	 */
 	public static long convertAlarmTime(int hour, int minute) {
 		// long triggerAtTime = 0;
@@ -149,7 +148,7 @@ public class AlarmMaster {
 	}
 
 	public static String formatAlarmTime(long startTime) {
-		Date d = convertStartTimeToDate(startTime);
+		Date d = convertAlarmTimeToDate(startTime);
 		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
 		return sdf.format(d);
 	}
@@ -159,13 +158,13 @@ public class AlarmMaster {
 	 * @return the next alarm trigger time. If the time is before current, it
 	 *         will return the same hour an minute on next day.
 	 */
-	public static long convertAlarmTime(long startTime) {
+	public static long calculateNextTriggerTime(long startTime) {
 		long triggerAtTime = 0;
 		Date currentDate = new Date();
 		// Date alarmDate = new Date();
 		// alarmDate.setHours((int) startTime / 100);
 		// alarmDate.setMinutes((int) startTime % 100);
-		Date alarmDate = convertStartTimeToDate(startTime);
+		Date alarmDate = convertAlarmTimeToDate(startTime);
 		if (alarmDate.before(currentDate)) {
 			// advance to next day
 			Calendar c = Calendar.getInstance();
@@ -179,7 +178,7 @@ public class AlarmMaster {
 		return triggerAtTime;
 	}
 
-	public static Date convertStartTimeToDate(long startTime) {
+	public static Date convertAlarmTimeToDate(long startTime) {
 		Date d = new Date();
 		d.setHours((int) startTime / 100);
 		d.setMinutes((int) startTime % 100);
@@ -231,7 +230,7 @@ public class AlarmMaster {
 				createAlarmPendingIntent(context, alarm),
 				PendingIntent.FLAG_ONE_SHOT);
 		// am.setRepeating(1, triggerAtTime, 5 * 1000, operation);
-		long triggerAtTime = convertAlarmTime(alarm.startTime);
+		long triggerAtTime = calculateNextTriggerTime(alarm.startTime);
 		am.set(1, triggerAtTime, operation);
 		WLog.d(TAG, String.format("set one shot alam, next fire at [%s]",
 				new Date(triggerAtTime).toLocaleString()));
@@ -251,7 +250,7 @@ public class AlarmMaster {
 		PendingIntent operation = PendingIntent.getBroadcast(context, 1,
 				createAlarmPendingIntent(context, alarm),
 				PendingIntent.FLAG_CANCEL_CURRENT);
-		long triggerAtTime = convertAlarmTime(alarm.startTime);
+		long triggerAtTime = calculateNextTriggerTime(alarm.startTime);
 		am.setRepeating(1, triggerAtTime, AlarmManager.INTERVAL_DAY, operation);
 		WLog.d(TAG, String.format(
 				"set repeat alarm, next fire at [%s] interval[%d]", new Date(
@@ -268,6 +267,7 @@ public class AlarmMaster {
 	public static Intent createAlarmPendingIntent(Context context,
 			TedAlarm alarm) {
 		Intent intent = new Intent(context, AlarmRingReceiver.class);
+		intent.setAction(TedAlarmIntent.ACTION_RING_ALARM);
 		intent.setData(convertAlarmToUri(alarm));
 
 		return intent;
@@ -524,4 +524,39 @@ public class AlarmMaster {
 		return false;
 	}
 
+	public static void cancelSyncCalender(Context context) {
+		AlarmManager am = (AlarmManager) context
+				.getSystemService(Context.ALARM_SERVICE);
+
+		PendingIntent operation = PendingIntent.getBroadcast(context, 2,
+				createSyncCalendarPendingIntent(context),
+				PendingIntent.FLAG_NO_CREATE);
+		am.cancel(operation);
+		WLog.d(TAG, String.format("cancelled SyncCalendar"));
+	}
+
+	/**
+	 * schedule sync google calendar daily
+	 * 
+	 * @param context
+	 */
+	public static void scheduleSyncCalendar(Context context) {
+		AlarmManager am = (AlarmManager) context
+				.getSystemService(Context.ALARM_SERVICE);
+
+		PendingIntent operation = PendingIntent.getBroadcast(context, 2,
+				createSyncCalendarPendingIntent(context),
+				PendingIntent.FLAG_CANCEL_CURRENT);
+		long triggerAtTime = calculateNextTriggerTime(convertAlarmTime(00, 00));
+
+		am.setRepeating(1, triggerAtTime, AlarmManager.INTERVAL_DAY, operation);
+		WLog.d(TAG, String.format("schedule sysnc calendar, next fire at [%s]",
+				new Date(triggerAtTime).toLocaleString()));
+	}
+
+	public static Intent createSyncCalendarPendingIntent(Context context) {
+		Intent intent = new Intent(context, AlarmRingReceiver.class);
+		intent.setAction(TedAlarmIntent.ACTION_SYNC_CALENDAR);
+		return intent;
+	}
 }

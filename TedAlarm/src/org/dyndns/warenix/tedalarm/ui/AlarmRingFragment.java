@@ -160,7 +160,7 @@ public class AlarmRingFragment extends SherlockFragment implements
 	}
 
 	void bindStartTimeView(long startTimeMs) {
-		Date d = AlarmMaster.convertStartTimeToDate(startTimeMs);
+		Date d = AlarmMaster.convertAlarmTimeToDate(startTimeMs);
 		mStartTime.setCurrentHour(d.getHours());
 		mStartTime.setCurrentMinute(d.getMinutes());
 	}

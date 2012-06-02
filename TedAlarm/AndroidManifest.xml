@@ -12,13 +12,15 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
+        n=""
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/Theme.Sherlock" >
         <activity
             android:name=".app.TedAlarmActivity"
             android:label="@string/app_name"
-            android:launchMode="singleTask" >
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -42,7 +44,20 @@
             android:name="org.dyndns.warenix.google.calendar.provider.GoogleCalendarProvider"
             android:authorities="googlecalendar" />
 
-        <activity android:name="com.google.api.GoogleOAuthActivity" />
+        <!-- use google oauth 2.0 library -->
+        <activity
+            android:name="com.google.api.ui.GoogleOAuthActivity"
+            android:theme="@style/Theme.Sherlock" >
+        </activity>
+
+        <service android:name="com.google.api.ui.GoogleOAuthIntentService" >
+            <intent-filter>
+                <action android:name="action_oauth" />
+                <action android:name="exchange_token" />
+                <action android:name="action_refresh_token" />
+                <action android:name="oauth_fail" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

@@ -23,6 +23,7 @@ public class AlarmRingReceiver extends BroadcastReceiver {
 		WLog.d(TAG, String.format("received alarm[%s]", alarmUri));
 
 		Intent serviceIntent = new Intent(context, TedAlarmService.class);
+		serviceIntent.setAction(intent.getAction());
 		serviceIntent.setData(alarmUri);
 		context.startService(serviceIntent);
 	}

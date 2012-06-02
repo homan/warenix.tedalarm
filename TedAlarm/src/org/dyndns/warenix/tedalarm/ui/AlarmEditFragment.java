@@ -227,7 +227,9 @@ public class AlarmEditFragment extends SherlockFragment implements
 	 * set values for new alarm action
 	 */
 	void bindForActionNewAlarm() {
-		bindStartTimeView(System.currentTimeMillis());
+		Date d = new Date();
+		bindStartTimeView(AlarmMaster.convertAlarmTime(d.getHours(),
+				d.getMinutes()));
 		mWeekDay.setVisibility(View.GONE);
 		bindHoliday(null);
 	}
@@ -275,7 +277,7 @@ public class AlarmEditFragment extends SherlockFragment implements
 	}
 
 	void bindStartTimeView(long startTimeMs) {
-		Date d = AlarmMaster.convertStartTimeToDate(startTimeMs);
+		Date d = AlarmMaster.convertAlarmTimeToDate(startTimeMs);
 		mStartTime.setCurrentHour(d.getHours());
 		mStartTime.setCurrentMinute(d.getMinutes());
 	}

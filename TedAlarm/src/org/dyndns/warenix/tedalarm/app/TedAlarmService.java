@@ -2,6 +2,8 @@ package org.dyndns.warenix.tedalarm.app;
 
 import org.dyndns.warenix.tedalarm.AlarmMaster;
 import org.dyndns.warenix.tedalarm.TedAlarm;
+import org.dyndns.warenix.tedalarm.TedAlarmIntent;
+import org.dyndns.warenix.tedalarm.ui.SyncFragment;
 import org.dyndns.warenix.util.WLog;
 
 import android.app.IntentService;
@@ -29,6 +31,16 @@ public class TedAlarmService extends IntentService {
 
 	@Override
 	protected void onHandleIntent(Intent intent) {
+		String action = intent.getAction();
+
+		if (TedAlarmIntent.ACTION_RING_ALARM.equals(action)) {
+			handleAlarmRing(intent);
+		} else if (TedAlarmIntent.ACTION_SYNC_CALENDAR.equals(action)) {
+			handleSyncCalendar(intent);
+		}
+	}
+
+	void handleAlarmRing(Intent intent) {
 		Uri alarmUri = intent.getData();
 		if (alarmUri != null) {
 			TedAlarm alarm = AlarmMaster.restoryAlarmByUri(
@@ -58,6 +70,12 @@ public class TedAlarmService extends IntentService {
 		} else {
 			WLog.d(TAG, String.format("no alarm?"));
 		}
+	}
+
+	void handleSyncCalendar(Intent intent) {
+		WLog.i(TAG, String.format("received action to sync calendar"));
+		SyncFragment.newInstance().onSync(getApplicationContext(),
+				intent.getBooleanExtra("doInBackground", true));
 	}
 
 	void updateAlarmIfOneShot(Context context, TedAlarm alarm) {
