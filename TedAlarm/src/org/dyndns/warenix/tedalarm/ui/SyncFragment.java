@@ -56,8 +56,19 @@ public class SyncFragment extends SherlockFragment {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			String action = intent.getAction();
+			boolean result = intent.getBooleanExtra("result", false);
 			WLog.d(TAG, String.format("received action[%s]", action));
-			onSync(context, true);
+			if (result) {
+				onSync(context, true);
+			} else {
+				WLog.d(TAG,
+						String.format("failed to oauth errorCode[%s]",
+								intent.getStringExtra("errorCode")));
+
+				Intent notificatoinIntent = GoogleOAuthIntentService
+						.prepareActionOAuthIntent(mMessenger, false);
+				context.startService(notificatoinIntent);
+			}
 		}
 	};
 
@@ -170,6 +181,14 @@ public class SyncFragment extends SherlockFragment {
 	private void showNotification(Context context, int id,
 			CharSequence tickerText, CharSequence contentTitle,
 			CharSequence contentText) {
+		Intent notificationIntent = new Intent(context, TedAlarmActivity.class);
+		showNotification(context, id, tickerText, contentTitle, contentText,
+				notificationIntent);
+	}
+
+	private void showNotification(Context context, int id,
+			CharSequence tickerText, CharSequence contentTitle,
+			CharSequence contentText, Intent notificationIntent) {
 		String ns = Context.NOTIFICATION_SERVICE;
 		NotificationManager mNotificationManager = (NotificationManager) context
 				.getSystemService(ns);
@@ -179,7 +198,6 @@ public class SyncFragment extends SherlockFragment {
 
 		Notification notification = new Notification(icon, tickerText, when);
 
-		Intent notificationIntent = new Intent(context, TedAlarmActivity.class);
 		PendingIntent contentIntent = PendingIntent.getActivity(context, 0,
 				notificationIntent, 0);
 
